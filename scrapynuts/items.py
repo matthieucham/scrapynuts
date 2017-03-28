@@ -7,7 +7,7 @@
 
 import scrapy
 from scrapy.loader import ItemLoader
-from scrapy.loader.processors import Identity, TakeFirst
+from scrapy.loader.processors import Identity, TakeFirst, Compose, MapCompose
 
 
 class MatchItem(scrapy.Item):
@@ -40,6 +40,7 @@ class PlayerStatItem(scrapy.Item):
 
 class MatchItemLoader(ItemLoader):
     default_item_class = MatchItem
+    default_input_processor = MapCompose(lambda v: v.strip())
     default_output_processor = TakeFirst()
 
 
