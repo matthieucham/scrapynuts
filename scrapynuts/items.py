@@ -40,7 +40,6 @@ class PlayerStatItem(scrapy.Item):
 
 class MatchItemLoader(ItemLoader):
     default_item_class = MatchItem
-    default_input_processor = MapCompose(lambda v: v.strip())
     default_output_processor = TakeFirst()
 
 

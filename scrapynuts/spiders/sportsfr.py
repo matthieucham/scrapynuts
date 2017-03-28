@@ -21,8 +21,8 @@ class SportsfrSpider(CrawlSpider):
         self.logger.info('Scraping match %s', response.url)
 
         loader = items.MatchItemLoader(items.MatchItem(), response=response)
-        loader.add_xpath('match_date',
-                         '(//div[@class="scoreboard"]/div[@class="sb-inner"]/div[@class="sb-content"]/div[@class="sb-metas"])[last()]/text()')
+        md = response.xpath('(//div[@class="scoreboard"]/div[@class="sb-inner"]/div[@class="sb-content"]/div[@class="sb-metas"])[last()]/text()').extract_first().strip()
+        loader.add_value('match_date', '%s %s' % (md.split()[1], md.split()[3]))
         loader.add_xpath('home_team',
                          '//div[@class="scoreboard"]//div[@class="sb-team sb-team1"]//div[@class="sb-team-name"]/text()')
         loader.add_xpath('away_team',
@@ -35,21 +35,19 @@ class SportsfrSpider(CrawlSpider):
         field = response.xpath('//div[@class="stade"]')
         homeplayers = field.xpath('div[@class="compo team1"]/ul/li')
         awayplayers = field.xpath('div[@class="compo team2"]/ul/li')
-        href_pattern = "/football/joueurs/[0-9]{1,2}/([a-z\-]+)\-[0-9]{3,6}.html"
         for pl in homeplayers:
-            plrating = {'team': 'home'}
-            href = pl.xpath('a/@href').extract_first().strip()
-            plrating['read_player'] = re.match(href_pattern, href).group(1).replace('-', ' ')
-            for mark in pl.xpath('a/span[@class="numero"]/text()').extract():
-                if mark != '-':
-                    plrating['rating'] = mark
-            #result.append(plrating)
+            loader.add_value('players_home', self.get_player(pl))
         for pl in awayplayers:
-            plrating = {'team': 'away'}
-            href = pl.xpath('a/@href').extract_first().strip()
-            plrating['read_player'] = re.match(href_pattern, href).group(1).replace('-', ' ')
-            for mark in pl.xpath('a/span[@class="numero"]/text()').extract():
-                if mark != '-':
-                    plrating['rating'] = mark
-            #result.append(plrating)
+            loader.add_value('players_away', self.get_player(pl))
         yield loader.load_item()
+
+    def get_player(self, pl):
+        href_pattern = "/football/joueurs/[0-9]{1,2}/([a-z\-]+)\-[0-9]{3,6}.html"
+        href = pl.xpath('a/@href').extract_first().strip()
+
+        loader = items.PlayerItemLoader()
+        loader.add_value('name', re.match(href_pattern, href).group(1).replace('-', ' '))
+        mark = pl.xpath('a/span[@class="numero"]/text()').extract()
+        if mark != '-':
+            loader.add_value('rating', mark)
+        yield dict(loader.load_item())
