@@ -9,6 +9,7 @@ from scrapy import signals
 from . import settings
 from scrapy.http import HtmlResponse
 from selenium import webdriver
+import time
 
 
 class ScrapynutsSpiderMiddleware(object):
@@ -68,6 +69,7 @@ class SeleniumDownloaderMiddleware(object):
         if not request.meta.get('selenium'):
             return
         self.driver.get(request.url)
+        time.sleep(2)  # for ajax calls. TODO : http://stackoverflow.com/questions/24053671/webdriver-wait-for-ajax-request-in-python
         body = self.driver.page_source
         response = HtmlResponse(url=self.driver.current_url, body=body, encoding='utf-8')
         return response
