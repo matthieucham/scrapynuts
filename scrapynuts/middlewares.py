@@ -6,10 +6,13 @@
 # http://doc.scrapy.org/en/latest/topics/spider-middleware.html
 
 from scrapy import signals
-from . import settings
 from scrapy.http import HtmlResponse
 from selenium import webdriver
-import time
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+from . import settings
 
 
 class ScrapynutsSpiderMiddleware(object):
@@ -64,12 +67,27 @@ class SeleniumDownloaderMiddleware(object):
     def __init__(self):
         self.driver = webdriver.Chrome(settings.SELENIUM_CHROMEDRIVER_PATH)  # your chosen driver
 
+    @classmethod
+    def from_crawler(cls, crawler):
+        s = cls()
+        crawler.signals.connect(s.engine_stopped, signal=signals.engine_stopped)
+        return s
+
+    def engine_stopped(self):
+        self.driver.quit()
+
     def process_request(self, request, spider):
         # only process tagged request or delete this if you want all
         if not request.meta.get('selenium'):
             return
         self.driver.get(request.url)
-        time.sleep(2)  # for ajax calls. TODO : http://stackoverflow.com/questions/24053671/webdriver-wait-for-ajax-request-in-python
+        if request.meta.get('wait_for_xpath') is not None:
+            try:
+                WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.XPATH,
+                                                                                     request.meta.get(
+                                                                                         'wait_for_xpath'))))
+            finally:
+                pass
         body = self.driver.page_source
         response = HtmlResponse(url=self.driver.current_url, body=body, encoding='utf-8')
         return response
