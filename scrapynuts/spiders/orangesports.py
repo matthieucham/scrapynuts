@@ -3,6 +3,8 @@ import re
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import CrawlSpider, Rule
 from .. import items
+from lxml import html
+from unidecode import unidecode
 
 
 class OrangesportsSpider(CrawlSpider):
@@ -24,7 +26,7 @@ class OrangesportsSpider(CrawlSpider):
         loader.add_xpath('home_score', '//div[@class="home-team"]//div[@class="score"]/text()')
         loader.add_xpath('away_score', '//div[@class="guest-team"]//div[@class="score"]/text()')
 
-        strong_in_article = response.xpath('//div[@itemprop="articleBody"]/p//strong/text()')
+        strong_in_article = html.fromstring(response.text).xpath('//div[@itemprop="articleBody"]/p//strong')
 
         next_is_home = False
         next_is_away = False
@@ -33,34 +35,36 @@ class OrangesportsSpider(CrawlSpider):
         away_pars = []
         awayp_to_search = None
         for par in strong_in_article:
-            if par.extract() is not None and par.extract().startswith('Avert'):
+            if par.text is not None and par.text.startswith('Avert'):
                 next_is_home = True
             elif next_is_home:
-                if par.extract().startswith('Expu') or par.extract().startswith('Exclu'):
+                if par.text.startswith('Expu') or par.text.startswith('Exclu'):
                     next_is_home = True
                 else:
                     home_pars.append(self.get_first_br_with_tail(par))
                     homep_to_search = par.xpath('following-sibling::strong')
                     next_is_home = False
-            elif par.extract() is not None and par.extract().startswith('Entra') and awayp_to_search is None:
+            elif par.text is not None and (
+                unidecode(par.text).startswith('Entraineur') or unidecode(par.text).startswith(
+                    'Selectionneur')) and awayp_to_search is None:
                 next_is_away = True
             elif next_is_away:
                 away_pars.append(self.get_first_br_with_tail(par))
                 awayp_to_search = par.xpath('following-sibling::strong')
                 next_is_away = False
-        loader.add_value('players_home', self.get_player(homep_to_search))
-        loader.add_value('players_away', self.get_player(awayp_to_search))
+        loader.add_value('players_home', self.get_player(home_pars, homep_to_search))
+        loader.add_value('players_away', self.get_player(away_pars, awayp_to_search))
         yield loader.load_item()
 
-    def get_player(self, p_to_search):
+    def get_player(self, pars, p_to_search):
         name_pattern = r'(?:puis )*([\w\.\'][\w\.\'|àéèäëâêiîïöôûüù\- ]+)[\s]*(?:\(cap\))*[\s]*\((?:[\d]+[^,\-]+(?:\-[\s])*)*$'
         if p_to_search is None:
             return
         # select relevant pars
-        pars = []
         for par in p_to_search:
             if par.text is not None:
-                if par.text.startswith('N\'ont pas partici') or par.text.startswith('Entra'):
+                if unidecode(par.text).startswith('N\'ont pas participe') or unidecode(par.text).startswith(
+                        'Entraineur') or unidecode(par.text).startswith('Selectionneur'):
                     break
                 else:
                     pars.append(par)
@@ -72,7 +76,7 @@ class OrangesportsSpider(CrawlSpider):
                 if content.startswith('Arbitre'):
                     ignore_next = True
                 if len(content) == 1 and content.isdigit:
-                    matched = re.search(name_pattern, previous_tail)
+                    matched = re.search(name_pattern, unidecode(previous_tail))
                     if matched is not None:
                         if ignore_next:
                             ignore_next = False
@@ -86,7 +90,7 @@ class OrangesportsSpider(CrawlSpider):
     def get_first_br_with_tail(self, par):
         p = None
         xpath_index = 1
-        while p is None or len(p) > 0:
-            p = par.xpath('following-sibling::br[%s]' % xpath_index)
+        while p is None or p.tail is None:
+            p = par.xpath('following-sibling::br[%s]' % xpath_index)[0]
             xpath_index += 1
         return p
