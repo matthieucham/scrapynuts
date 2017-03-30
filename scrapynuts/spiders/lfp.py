@@ -19,7 +19,7 @@ class LfpSpider(CrawlSpider):
 
     def start_requests(self):
         req = Request(
-            'http://www.lfp.fr/competitionPluginCalendrierResultat/changeCalendrierHomeJournee?c=ligue1&js=30&id=0',
+            'http://www.lfp.fr/ligue1/calendrier_resultat',
             dont_filter=True)
         req.meta.update(selenium=True)
         return [req]

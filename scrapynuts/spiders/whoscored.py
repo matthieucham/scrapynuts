@@ -19,7 +19,7 @@ class WhoscoredSpider(CrawlSpider):
             callback='parse_match'), )
 
     def start_requests(self):
-        req = Request('https://www.whoscored.com/Regions/11/Tournaments/68/Argentina-Primera-Divisi%C3%B3n',
+        req = Request('https://www.whoscored.com/Regions/74/Tournaments/22/France-Ligue-1',
                       dont_filter=True)
         req.meta.update(selenium=True)
         return [req]
