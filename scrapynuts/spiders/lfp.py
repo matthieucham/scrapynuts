@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import re
-import unidecode
 
+import unidecode
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import CrawlSpider, Rule, Request
 
@@ -50,10 +50,12 @@ class LfpSpider(CrawlSpider):
         yield loader.load_item()
 
     def get_player(self, response, field):
+        name_pattern = r'(\(c\))?([\w\s]+)(\(c\))?'
         for player in response.xpath(
                         '//div[@id="bloc_infosMatch_data"]/h2[text()="Titulaires"]/following-sibling::div[contains(@class, "%s")][1]/ul/li/a' % field):
             plref = player.xpath('@href').extract_first().strip()
-            pldisplay = player.xpath('span[@class!="numero"]/text()').extract_first().strip()
+            pldisplay = re.search(name_pattern,
+                                  player.xpath('span[@class!="numero"]/text()').extract_first()).group(2).strip()
             loader = items.PlayerItemLoader()
             loader.add_value('name', plref[len('/joueur/'):].replace('-', ' '))
             loader.add_value('stats', self.get_stats(player, response, field, plref, pldisplay))
@@ -101,4 +103,11 @@ class LfpSpider(CrawlSpider):
             loader.add_value('penalties_scored', pen)
         if goals > 0:
             loader.add_value('goals_scored', goals)
+        # assists
+        ass = 0
+        for _ in response.xpath(
+                        '//div[@id="buts"]//li/span[contains(@class,"passeur") and contains(text(), "%s")]' % pldisplay):
+            ass += 1
+        if ass > 0:
+            loader.add_value('goals_assists', ass)
         yield dict(loader.load_item())
