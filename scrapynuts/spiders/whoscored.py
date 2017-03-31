@@ -21,7 +21,7 @@ class WhoscoredSpider(CrawlSpider):
     def start_requests(self):
         req = Request('https://www.whoscored.com/Regions/74/Tournaments/22/France-Ligue-1',
                       dont_filter=True)
-        req.meta.update(selenium=True)
+        req.meta.update(selenium=True, wait_for_xpath='//table[@id="tournament-fixture"]')
         return [req]
 
     def increment_or_set_key(self, target_dict, key):
