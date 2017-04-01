@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import re
 import json
+from pytz import timezone
+import dateparser
 
 from scrapy.spiders import Rule, CrawlSpider
 from scrapy.linkextractors import LinkExtractor
@@ -93,7 +95,11 @@ class WhoscoredSpider(CrawlSpider):
                             break
 
         loader = items.MatchItemLoader(items.MatchItem(), response=response)
-        loader.add_value('match_date', ws_stats['startTime'])
+        dt = dateparser.parse(ws_stats['startTime'])
+        londontz = timezone('Europe/London')
+        paristz = timezone('Europe/Paris')
+        loc_dt = londontz.localize(dt)
+        loader.add_value('match_date', loc_dt.astimezone(paristz).isoformat())
         loader.add_value('home_team', ws_stats['home']['name'])
         loader.add_value('away_team', ws_stats['away']['name'])
         loader.add_value('home_score', ws_stats['score'].split(' : ')[0])

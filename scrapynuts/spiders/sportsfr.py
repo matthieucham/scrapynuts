@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
-import scrapy
 import re
+
+from pytz import timezone
+import dateparser
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import CrawlSpider, Rule
+
 from .. import items
 
 
@@ -21,8 +24,16 @@ class SportsfrSpider(CrawlSpider):
         self.logger.info('Scraping match %s', response.url)
 
         loader = items.MatchItemLoader(items.MatchItem(), response=response)
-        md = response.xpath('(//div[@class="scoreboard"]/div[@class="sb-inner"]/div[@class="sb-content"]/div[@class="sb-metas"])[last()]/text()').extract_first().strip()
-        loader.add_value('match_date', '%s %s' % (md.split()[1], md.split()[3]))
+        md = response.xpath(
+            '(//div[@class="scoreboard"]/div[@class="sb-inner"]/div[@class="sb-content"]/div[@class="sb-metas"])[last()]/text()').extract_first().strip()
+        try:
+            dt = dateparser.parse('%s %s' % (md.split()[1], md.split()[3]), languages=['fr'])
+            paristz = timezone('Europe/Paris')
+            loc_dt = paristz.localize(dt)
+            game_date = loc_dt.isoformat()
+        except ValueError:
+            game_date = None
+        loader.add_value('match_date', game_date)
         loader.add_xpath('home_team',
                          '//div[@class="scoreboard"]//div[@class="sb-team sb-team1"]//div[@class="sb-team-name"]/text()')
         loader.add_xpath('away_team',

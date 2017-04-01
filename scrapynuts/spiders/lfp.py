@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import re
-
+from pytz import timezone
+import dateparser
 import unidecode
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import CrawlSpider, Rule, Request
@@ -13,7 +14,9 @@ class LfpSpider(CrawlSpider):
     allowed_domains = ['lfp.fr']
 
     rules = (
-        Rule(LinkExtractor(allow='ligue1\/feuille_match\/\w{4,}'), callback='parse_match',
+        Rule(LinkExtractor(allow='ligue1\/feuille_match\/\d{4,}$',
+                           restrict_xpaths='//a[contains(@href,"feuille_match")]/parent::td[@class="stats"]/preceding-sibling::td[contains(@class,"horaire")]'),
+             callback='parse_match',
              process_request='add_meta_selenium'),
     )
 
@@ -42,8 +45,15 @@ class LfpSpider(CrawlSpider):
                          '//div[@class="contenu_box match_stats"]/div[@class="score"]/div[@class="club_ext"]/span[contains(@class,"buts")]/text()')
         md = response.xpath(
             '(//div[@class="contenu_box match_stats"]/h1/following-sibling::p)[2]/text()').extract_first().split(' - ')[
-            0]
-        loader.add_value('match_date', md)
+                 0] + ' ' + response.meta.get('link_text').strip()
+        try:
+            dt = dateparser.parse(md, languages=['fr'])
+            paristz = timezone('Europe/Paris')
+            loc_dt = paristz.localize(dt)
+            game_date = loc_dt.isoformat()
+        except ValueError:
+            game_date = None
+        loader.add_value('match_date', game_date)
         loader.add_value('players_home', self.get_player(response, 'dom'))
         loader.add_value('players_away', self.get_player(response, 'ext'))
 
@@ -63,16 +73,23 @@ class LfpSpider(CrawlSpider):
 
     def get_stats(self, player, response, field, plref, pldisplay):
         min_pattern = r'\((\d{1,2})\'.*\)'
+        card_pattern = r'(\d{1,2})\'.*'
         loader = items.PlayerStatItemLoader()
         plclass = player.xpath('span[@class!="numero"]/@class').extract_first().strip()
         # playtime
+        max_playtime = 90
+        liredcard = response.xpath(
+            '//div[@id="cartons"]//span[contains(@class,"icon_carton_rouge")]/following-sibling::a[@href="%s"]/parent::li' % plref)
+        if len(liredcard) > 0:
+            clean = unidecode.unidecode(''.join(liredcard.xpath('text()').extract()).strip())
+            max_playtime = int(re.search(card_pattern, clean).group(1))
         if len(plclass) == 0:
-            loader.add_value('playtime', 90)
+            loader.add_value('playtime', max_playtime)
         elif plclass == 'entrant':
             read_minute_in = player.xpath('parent::li/text()').extract_first()
             minute_in = int(re.search(min_pattern, read_minute_in).group(1))
             if minute_in is not None:
-                loader.add_value('playtime', max(90 - minute_in, 1))
+                loader.add_value('playtime', max(max_playtime - minute_in, 1))
         elif plclass == 'sortant':
             read_minute_out = player.xpath(
                 'parent::li/following-sibling::li/a/span[contains(@class,"entrant")]/parent::a/parent::li/text()').extract_first()

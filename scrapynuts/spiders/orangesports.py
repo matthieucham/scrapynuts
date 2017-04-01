@@ -5,6 +5,8 @@ from scrapy.spiders import CrawlSpider, Rule
 from .. import items
 from lxml import html
 from unidecode import unidecode
+from pytz import timezone
+import dateparser
 
 
 class OrangesportsSpider(CrawlSpider):
@@ -20,7 +22,15 @@ class OrangesportsSpider(CrawlSpider):
     def parse_match(self, response):
         self.logger.info('Scraping match %s', response.url)
         loader = items.MatchItemLoader(response=response)
-        loader.add_xpath('match_date', '//time[@itemprop="startDate"]/@content')
+        md = response.xpath('//time[@itemprop="startDate"]/@content').extract_first()
+        try:
+            dt = dateparser.parse(md, languages=['fr'])
+            paristz = timezone('Europe/Paris')
+            loc_dt = paristz.localize(dt)
+            game_date = loc_dt.isoformat()
+        except ValueError:
+            game_date = None
+        loader.add_value('match_date', game_date)
         loader.add_xpath('home_team', '//div[@class="team" and @itemprop="homeTeam"]/@title')
         loader.add_xpath('away_team', '//div[@class="team" and @itemprop="awayTeam"]/@title')
         loader.add_xpath('home_score', '//div[@class="home-team"]//div[@class="score"]/text()')
