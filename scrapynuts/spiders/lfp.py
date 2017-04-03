@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 import re
+
 from pytz import timezone
 import dateparser
 import unidecode
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import CrawlSpider, Rule, Request
+from inline_requests import inline_requests
 
 from .. import items
 
@@ -16,24 +18,34 @@ class LfpSpider(CrawlSpider):
     rules = (
         Rule(LinkExtractor(allow='ligue1\/feuille_match\/\d{4,}$',
                            restrict_xpaths='//a[contains(@href,"feuille_match")]/parent::td[@class="stats"]/preceding-sibling::td[contains(@class,"horaire")]'),
-             callback='parse_match',
-             process_request='add_meta_selenium'),
+             callback='parse_match'),
     )
 
     def start_requests(self):
-        req = Request(
-            'http://www.lfp.fr/ligue1/calendrier_resultat',
-            dont_filter=True)
-        req.meta.update(selenium=True)
+        try:
+            req = Request(
+                'http://www.lfp.fr/competitionPluginCalendrierResultat/changeCalendrierHomeJournee?c=ligue1&js=%s&id=0' %
+                self.journee,
+                dont_filter=True)
+        except AttributeError:
+            req = Request('http://www.lfp.fr/ligue1/calendrier_resultat', dont_filter=True)
         return [req]
 
-    def add_meta_selenium(self, request):
-        request.meta.update(selenium=True,
-                            wait_for_xpath='//div[@id="bloc_statsJoueursMatch_data"]/table/caption[contains(text(), "Statistiques du gardien de but")]')
-        return request
-
+    @inline_requests
     def parse_match(self, response):
         self.logger.info('Scraping match %s', response.url)
+
+        match_id = response.xpath('//input[@id="match_id_hidden"]/@value').extract_first()
+        dom_id = response.xpath('//input[@id="dom_id_hidden"]/@value').extract_first()
+        ext_id = response.xpath('//input[@id="ext_id_hidden"]/@value').extract_first()
+
+        infos_match_url = response.urljoin('showInfosMatch?matchId=%s&domId=%s&extId=%s' % (match_id, dom_id, ext_id))
+        infos_match_resp = yield Request(infos_match_url)
+
+        stats_joueurs_url = response.urljoin(
+            'showStatsJoueursMatch?matchId=%s&domId=%s&extId=%s' % (match_id, dom_id, ext_id))
+        stats_joueurs_resp = yield Request(stats_joueurs_url)
+
         loader = items.MatchItemLoader(response=response)
         loader.add_xpath('home_team',
                          '//div[@class="contenu_box match_stats"]/div[@class="score"]/div[@class="club_dom"]/span[contains(@class,"club")]/text()')
@@ -54,24 +66,27 @@ class LfpSpider(CrawlSpider):
         except ValueError:
             game_date = None
         loader.add_value('match_date', game_date)
-        loader.add_value('players_home', self.get_player(response, 'dom'))
-        loader.add_value('players_away', self.get_player(response, 'ext'))
+        loader.add_value('players_home', self.get_player(response, infos_match_resp, stats_joueurs_resp, 'dom'))
+        loader.add_value('players_away', self.get_player(response, infos_match_resp, stats_joueurs_resp, 'ext'))
 
         yield loader.load_item()
 
-    def get_player(self, response, field):
-        name_pattern = r'(\(c\))?([\w\s]+)(\(c\))?'
-        for player in response.xpath(
-                        '//div[@id="bloc_infosMatch_data"]/h2[text()="Titulaires"]/following-sibling::div[contains(@class, "%s")][1]/ul/li/a' % field):
+    def get_player(self, response, infos_match_resp, stats_joueurs_resp, field):
+        name_pattern_1 = u'(\(c\))?([\w\.\'|àéèäëâêiîïöôûüù\-\s]+)(\(c\))?'
+        name_pattern = re.compile(name_pattern_1, re.UNICODE)
+        for player in infos_match_resp.xpath(
+                        '//div[contains(@class, "%s")][1]/ul/li/a' % field):
             plref = player.xpath('@href').extract_first().strip()
-            pldisplay = re.search(name_pattern,
-                                  player.xpath('span[@class!="numero"]/text()').extract_first()).group(2).strip()
+            plread = player.xpath('span[@class!="numero"]/text()').extract_first()
+            pldisplay = re.search(name_pattern, plread).group(2).strip()
             loader = items.PlayerItemLoader()
             loader.add_value('name', plref[len('/joueur/'):].replace('-', ' '))
-            loader.add_value('stats', self.get_stats(player, response, field, plref, pldisplay))
+            loader.add_value('stats',
+                             self.get_stats(player, response, stats_joueurs_resp, plref,
+                                            pldisplay))
             yield dict(loader.load_item())
 
-    def get_stats(self, player, response, field, plref, pldisplay):
+    def get_stats(self, player, response, stats_joueurs_resp, plref, pldisplay):
         min_pattern = r'\((\d{1,2})\'.*\)'
         card_pattern = r'(\d{1,2})\'.*'
         loader = items.PlayerStatItemLoader()
@@ -96,8 +111,8 @@ class LfpSpider(CrawlSpider):
             minute_out = int(re.search(min_pattern, read_minute_out).group(1))
             loader.add_value('playtime', minute_out)
         # saves
-        tdsaves = response.xpath(
-            '//div[@id="bloc_statsJoueursMatch_data"]/table/caption[contains(text(), "Statistiques du gardien de but")]/parent::table[1]//td/a[@href="%s"]/parent::td' % plref)
+        tdsaves = stats_joueurs_resp.xpath(
+            '//table/caption[contains(text(), "Statistiques du gardien de but")]/parent::table[1]//td/a[@href="%s"]/parent::td' % plref)
         if len(tdsaves) > 0:
             loader.add_value('goals_saved', int(tdsaves.xpath('following-sibling::td[2]/text()').extract_first()) + int(
                 tdsaves.xpath('following-sibling::td[3]/text()').extract_first()))
