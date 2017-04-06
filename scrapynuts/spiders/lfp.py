@@ -4,6 +4,7 @@ import re
 from pytz import timezone
 import dateparser
 import unidecode
+import hashlib
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import CrawlSpider, Rule, Request
 from inline_requests import inline_requests
@@ -47,6 +48,8 @@ class LfpSpider(CrawlSpider):
         stats_joueurs_resp = yield Request(stats_joueurs_url)
 
         loader = items.MatchItemLoader(response=response)
+        loader.add_value('hash_url', hashlib.md5(response.url).hexdigest())
+        loader.add_value('source', 'LFP')
         loader.add_xpath('home_team',
                          '//div[@class="contenu_box match_stats"]/div[@class="score"]/div[@class="club_dom"]/span[contains(@class,"club")]/text()')
         loader.add_xpath('home_score',

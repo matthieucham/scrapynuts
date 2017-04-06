@@ -11,6 +11,8 @@ from scrapy.loader.processors import Identity, TakeFirst, Compose, MapCompose
 
 
 class MatchItem(scrapy.Item):
+    hash_url = scrapy.Field()
+    source = scrapy.Field()
     match_date = scrapy.Field()
     home_team = scrapy.Field()
     away_team = scrapy.Field()

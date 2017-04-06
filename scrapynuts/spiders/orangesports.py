@@ -9,7 +9,7 @@ from pytz import timezone
 import dateparser
 
 from .. import items
-
+import hashlib
 
 class OrangesportsSpider(CrawlSpider):
     name = 'orangesports'
@@ -32,6 +32,8 @@ class OrangesportsSpider(CrawlSpider):
             game_date = loc_dt.isoformat()
         except ValueError:
             game_date = None
+        loader.add_value('hash_url', hashlib.md5(response.url).hexdigest())
+        loader.add_value('source', 'ORS')
         loader.add_value('match_date', game_date)
         loader.add_xpath('home_team', '//div[@class="team" and @itemprop="homeTeam"]/@title')
         loader.add_xpath('away_team', '//div[@class="team" and @itemprop="awayTeam"]/@title')

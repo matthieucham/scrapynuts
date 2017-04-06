@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 import re
 import json
+import hashlib
+
 from pytz import timezone
 import dateparser
-
 from scrapy.spiders import Rule, CrawlSpider
 from scrapy.linkextractors import LinkExtractor
 from scrapy import Request
@@ -18,13 +19,18 @@ class WhoscoredSpider(CrawlSpider):
     rules = (
         Rule(
             LinkExtractor(allow=('Matches/\w{6,}/Live$',), restrict_xpaths='//div[@id="tournament-fixture-wrapper"]'),
-            callback='parse_match'), )
+            callback='parse_match',
+            process_request='add_meta_selenium'), )
 
     def start_requests(self):
         req = Request('https://www.whoscored.com/Regions/74/Tournaments/22/France-Ligue-1',
                       dont_filter=True)
         req.meta.update(selenium=True, wait_for_xpath='//table[@id="tournament-fixture"]')
         return [req]
+
+    def add_meta_selenium(self, request):
+        request.meta.update(selenium=True)
+        return request
 
     def increment_or_set_key(self, target_dict, key):
         if key not in target_dict:
@@ -99,6 +105,8 @@ class WhoscoredSpider(CrawlSpider):
         londontz = timezone('Europe/London')
         paristz = timezone('Europe/Paris')
         loc_dt = londontz.localize(dt)
+        loader.add_value('hash_url', hashlib.md5(response.url).hexdigest())
+        loader.add_value('source', 'WHOSC')
         loader.add_value('match_date', loc_dt.astimezone(paristz).isoformat())
         loader.add_value('home_team', ws_stats['home']['name'])
         loader.add_value('away_team', ws_stats['away']['name'])

@@ -5,9 +5,10 @@
 # For simplicity, this file contains only settings considered important or
 # commonly used. You can find more settings consulting the documentation:
 #
-#     http://doc.scrapy.org/en/latest/topics/settings.html
-#     http://scrapy.readthedocs.org/en/latest/topics/downloader-middleware.html
-#     http://scrapy.readthedocs.org/en/latest/topics/spider-middleware.html
+# http://doc.scrapy.org/en/latest/topics/settings.html
+# http://scrapy.readthedocs.org/en/latest/topics/downloader-middleware.html
+# http://scrapy.readthedocs.org/en/latest/topics/spider-middleware.html
+import os
 
 BOT_NAME = 'scrapynuts'
 
@@ -19,7 +20,7 @@ NEWSPIDER_MODULE = 'scrapynuts.spiders'
 #USER_AGENT = 'scrapynuts (+http://www.yourdomain.com)'
 
 # Obey robots.txt rules
-ROBOTSTXT_OBEY = True
+ROBOTSTXT_OBEY = False
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 CONCURRENT_REQUESTS = 1
@@ -64,9 +65,10 @@ DOWNLOADER_MIDDLEWARES = {
 
 # Configure item pipelines
 # See http://scrapy.readthedocs.org/en/latest/topics/item-pipeline.html
-#ITEM_PIPELINES = {
-#    'scrapynuts.pipelines.ScrapynutsPipeline': 300,
-#}
+ITEM_PIPELINES = {
+    'scrapynuts.pipelines.ScrapynutsFilterPipeline': 300,
+    'scrapynuts.pipelines.ScrapynutsPostStatnutsPipeline': 306,
+}
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See http://doc.scrapy.org/en/latest/topics/autothrottle.html
@@ -91,3 +93,10 @@ DOWNLOADER_MIDDLEWARES = {
 
 
 SELENIUM_CHROMEDRIVER_PATH = 'D:\dev\seleniumdrivers\chromedriver.exe'
+
+# TODO remove if not test
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+
+STATNUTS_CLIENT_ID = 'eMcuvDoiB9J67Nhxul5bPVExO8dL6A0JWKhzOn2w'
+STATNUTS_SECRET = 'L0KDhOg5OlKLBrhA5QEruDkQQy6Ch7bhY3IXcUfzh46MjRRUkgwRph2mmzh6aaqLgCKXD5NbYd5or2Nisg1rDsLqyKUg6P5vWoxcwSucl6vDquO1Ngxl9Jgkk1J1JQ16'
+STATNUTS_URL = 'http://127.0.0.1:8000/'

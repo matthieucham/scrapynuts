@@ -7,6 +7,7 @@ from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import CrawlSpider, Rule
 
 from .. import items
+import hashlib
 
 
 class SportsfrSpider(CrawlSpider):
@@ -33,6 +34,8 @@ class SportsfrSpider(CrawlSpider):
             game_date = loc_dt.isoformat()
         except ValueError:
             game_date = None
+        loader.add_value('hash_url', hashlib.md5(response.url).hexdigest())
+        loader.add_value('source', 'SPORT')
         loader.add_value('match_date', game_date)
         loader.add_xpath('home_team',
                          '//div[@class="scoreboard"]//div[@class="sb-team sb-team1"]//div[@class="sb-team-name"]/text()')
