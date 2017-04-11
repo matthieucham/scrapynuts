@@ -1,4 +1,5 @@
 import json
+import urlparse
 from scrapy.exceptions import DropItem
 from scrapy.exporters import PythonItemExporter
 from requests_oauthlib import OAuth2Session
@@ -38,5 +39,7 @@ class ScrapynutsPostStatnutsPipeline(object):
     def process_item(self, item, spider):
         if self.access_token is None:
             self.access_token = self._get_access_token()
-        self.oauth.post(self.sn_store_url, json=json.dumps(self.exporter.export_item(item)))
+        item_json = self.exporter.export_item(item)
+        hash_url = item_json.pop('hash_url')+'/'
+        self.oauth.post(urlparse.urljoin(self.sn_store_url, hash_url), json=item_json)
         print 'Item stored with hash = %s' % item['hash_url']
