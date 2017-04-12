@@ -1,11 +1,13 @@
-import json
 import urlparse
+
 from scrapy.exceptions import DropItem
+
 from scrapy.exporters import PythonItemExporter
 from requests_oauthlib import OAuth2Session
-from oauthlib.oauth2 import BackendApplicationClient
+from oauthlib.oauth2 import BackendApplicationClient, LegacyApplicationClient
 
 from . import settings
+
 # -*- coding: utf-8 -*-
 
 # Define your item pipelines here
@@ -28,18 +30,18 @@ class ScrapynutsPostStatnutsPipeline(object):
         self.sn_store_url = settings.STATNUTS_URL + 'scrap/datasheets/'
         self.token_url = settings.STATNUTS_URL + 'o/token/'
         self.access_token = None
-        self.oauth = OAuth2Session(client=BackendApplicationClient(client_id=self.client_id))
+        self.oauth = OAuth2Session(client=LegacyApplicationClient(client_id=self.client_id))
         self.exporter = PythonItemExporter(binary=False)
 
     def _get_access_token(self):
         token = self.oauth.fetch_token(token_url=self.token_url, client_id=self.client_id,
-                                       client_secret=self.client_secret)
+                                       client_secret=self.client_secret, username='scrapy', password='scrapy')
         return token
 
     def process_item(self, item, spider):
         if self.access_token is None:
             self.access_token = self._get_access_token()
         item_json = self.exporter.export_item(item)
-        hash_url = item_json.pop('hash_url')+'/'
+        hash_url = item_json.pop('hash_url') + '/'
         self.oauth.post(urlparse.urljoin(self.sn_store_url, hash_url), json=item_json)
         print 'Item stored with hash = %s' % item['hash_url']
