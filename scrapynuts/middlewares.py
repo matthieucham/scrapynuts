@@ -8,6 +8,7 @@
 from scrapy import signals
 from scrapy.http import HtmlResponse
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -65,7 +66,9 @@ class ScrapynutsSpiderMiddleware(object):
 
 class SeleniumDownloaderMiddleware(object):
     def __init__(self):
-        self.driver = webdriver.Chrome(settings.SELENIUM_CHROMEDRIVER_PATH)  # your chosen driver
+        chop = webdriver.ChromeOptions()
+        chop.add_extension(settings.SELENIUM_CHROMEADBLOCK_PATH)
+        self.driver = webdriver.Chrome(settings.SELENIUM_CHROMEDRIVER_PATH, chrome_options=chop)  # your chosen driver
 
     @classmethod
     def from_crawler(cls, crawler):
