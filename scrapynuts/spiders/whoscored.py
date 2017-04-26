@@ -17,8 +17,11 @@ class WhoscoredSpider(CrawlSpider):
     allowed_domains = ["whoscored.com"]
 
     rules = (
+        Rule(LinkExtractor(allow=('Regions/74/Tournaments/22/Seasons/\d+/Stages/\d+/Fixtures',),
+                           restrict_xpaths='//div[@id="sub-navigation"]'),
+             process_request='add_meta_selenium', follow=True),
         Rule(
-            LinkExtractor(allow=('Matches/\w{6,}/Live$',), restrict_xpaths='//div[@id="tournament-fixture-wrapper"]'),
+            LinkExtractor(allow=('Matches/\w{6,}/Live',), restrict_xpaths='//div[@id="tournament-fixture-wrapper"]'),
             callback='parse_match',
             process_request='add_meta_selenium'), )
 
