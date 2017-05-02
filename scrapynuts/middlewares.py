@@ -4,7 +4,8 @@
 #
 # See documentation in:
 # http://doc.scrapy.org/en/latest/topics/spider-middleware.html
-
+import time
+import random
 from scrapy import signals
 from scrapy.http import HtmlResponse
 from selenium import webdriver
@@ -91,6 +92,10 @@ class SeleniumDownloaderMiddleware(object):
                                                                                          'wait_for_xpath'))))
             finally:
                 pass
+        if request.meta.get('click_on_xpath') is not None:
+            target = self.driver.find_element_by_xpath(request.meta.get('click_on_xpath'))
+            time.sleep(random.random())
+            target.click()
         body = self.driver.page_source
         response = HtmlResponse(url=self.driver.current_url, body=body, encoding='utf-8')
         return response

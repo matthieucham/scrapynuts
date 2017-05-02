@@ -35,7 +35,7 @@ class ScrapynutsPostStatnutsPipeline(object):
 
     def _get_access_token(self):
         token = self.oauth.fetch_token(token_url=self.token_url, client_id=self.client_id,
-                                       client_secret=self.client_secret, username='scrapy', password='scrapy')
+                                       client_secret=self.client_secret, username='scrapynuts', password='scrapynuts')
         return token
 
     def process_item(self, item, spider):
