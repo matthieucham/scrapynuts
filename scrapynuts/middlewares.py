@@ -6,10 +6,10 @@
 # http://doc.scrapy.org/en/latest/topics/spider-middleware.html
 import time
 import random
+
 from scrapy import signals
 from scrapy.http import HtmlResponse
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -96,6 +96,13 @@ class SeleniumDownloaderMiddleware(object):
             target = self.driver.find_element_by_xpath(request.meta.get('click_on_xpath'))
             time.sleep(random.random())
             target.click()
+            if request.meta.get('wait_after_click') is not None:
+                try:
+                    WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.XPATH,
+                                                                                         request.meta.get(
+                                                                                             'wait_after_click'))))
+                finally:
+                    pass
         body = self.driver.page_source
         response = HtmlResponse(url=self.driver.current_url, body=body, encoding='utf-8')
         return response

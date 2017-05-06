@@ -29,7 +29,8 @@ class WhoscoredSpider(CrawlSpider):
         req = Request('https://www.whoscored.com/Regions/74/Tournaments/22/France-Ligue-1',
                       dont_filter=True)
         req.meta.update(selenium=True, wait_for_xpath='//table[@id="tournament-fixture"]',
-                        click_on_xpath='//div[@id="date-controller"]/a[contains(@class,"previous")]')
+                        click_on_xpath='//div[@id="date-controller"]/a[contains(@class,"previous")]',
+                        wait_after_click='//table[@id="tournament-fixture"]//td/a[contains(@class,"result-1 rc")]')
         return [req]
 
     def add_meta_selenium(self, request):
