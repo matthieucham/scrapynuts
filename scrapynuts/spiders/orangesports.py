@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import re
+import hashlib
 
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import CrawlSpider, Rule
@@ -9,7 +10,7 @@ from pytz import timezone
 import dateparser
 
 from .. import items
-import hashlib
+
 
 class OrangesportsSpider(CrawlSpider):
     name = 'orangesports'
@@ -48,13 +49,12 @@ class OrangesportsSpider(CrawlSpider):
         homep_to_search = None
         away_pars = []
         awayp_to_search = None
+        next_par_maybe_home = ['Avert', 'Expu', 'Exclu', 'But']
         for par in strong_in_article:
-            if par.text is not None and par.text.startswith('Avert'):
+            if par.text is not None and any(par.text.startswith(maybe) for maybe in next_par_maybe_home):
                 next_is_home = True
             elif next_is_home:
-                if par.text.startswith('Expu') or par.text.startswith('Exclu'):
-                    next_is_home = True
-                else:
+                if par.text is not None and not any(par.text.startswith(maybe) for maybe in next_par_maybe_home):
                     home_pars.append(self.get_first_br_with_tail(par))
                     homep_to_search = par.xpath('following-sibling::strong')
                     next_is_home = False
@@ -71,7 +71,7 @@ class OrangesportsSpider(CrawlSpider):
         yield loader.load_item()
 
     def get_player(self, pars, p_to_search):
-        name_pattern_1 = u'(?:puis )*([\w\.\'][\w\.\'|àéèäëâêiîïöôûüù\- ]+)[\s]*(?:\(cap\))*[\s]*\((?:[\d]+[^,\-]+(?:\-[\s])*)*$'
+        name_pattern_1 = u'(?:puis )*([\w\.\'][\w\.\'|àéèäëâêiîïöôûüùñç\- ]+)[\s]*(?:\(cap\))*[\s]*\((?:[\d]+[^,\-]+(?:\-[\s])*)*$'
         name_pattern = re.compile(name_pattern_1, re.UNICODE)
         if p_to_search is None:
             return
