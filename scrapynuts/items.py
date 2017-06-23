@@ -38,6 +38,7 @@ class PlayerStatItem(scrapy.Item):
     goals_saved = scrapy.Field()
     goals_conceded = scrapy.Field()
     own_goals = scrapy.Field()
+    penalties_saved = scrapy.Field()
 
 
 class MatchItemLoader(ItemLoader):
