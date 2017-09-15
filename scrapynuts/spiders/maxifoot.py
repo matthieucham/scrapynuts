@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from scrapy.spiders import CrawlSpider, Rule
 
-from utils import WithTextLxmlLinkExtractor
+from utils import RestrictTextLinkExtractor
 
 
 class MaxifootSpider(CrawlSpider):
@@ -14,15 +14,15 @@ class MaxifootSpider(CrawlSpider):
         pass
 
     rules = (
-        Rule(WithTextLxmlLinkExtractor(allow=('football/article',),
+        Rule(RestrictTextLinkExtractor(allow=('football/article',),
                                        restrict_xpaths='//div[@id="main"]',
-                                       process_text=test_link), follow=True),
+                                       link_text_regex=u'NOTES des joueurs \(', process_value=test_link), follow=True),
     )
 
 
     def parse_item(self, response):
         i = {}
         # i['domain_id'] = response.xpath('//input[@id="sid"]/@value').extract()
-        #i['name'] = response.xpath('//div[@id="name"]').extract()
+        # i['name'] = response.xpath('//div[@id="name"]').extract()
         #i['description'] = response.xpath('//div[@id="description"]').extract()
         return i
