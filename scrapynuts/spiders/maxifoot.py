@@ -59,7 +59,7 @@ class MaxifootSpider(CrawlSpider):
                 loader.add_value('players_home', self.get_player(unidecode(pl)))
             for pl in notes_away:
                 loader.add_value('players_away', self.get_player(unidecode(pl)))
-        return loader.load_item()
+        yield loader.load_item()
 
     def get_player(self, pl):
         matched = re.match(u'(.+) \(([\d,]+)\)$', pl)
