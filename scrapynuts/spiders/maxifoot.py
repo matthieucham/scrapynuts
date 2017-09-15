@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
+import hashlib
+import re
+
 from scrapy.spiders import CrawlSpider, Rule
 from pytz import timezone
 import dateparser
-import hashlib
-import re
 from unidecode import unidecode
-from .. import items
 
+from .. import items
 from utils import RestrictTextLinkExtractor
 
 
@@ -39,6 +40,8 @@ class MaxifootSpider(CrawlSpider):
         loader.add_value('match_date', game_date)
         home = fiche.xpath('b/a[1]/text()').extract_first()
         away = fiche.xpath('b/a[2]/text()').extract_first()
+        step_txt = fiche.xpath('b[2]/text()').extract_first()
+        loader.add_value('step', re.search(u'(\d+)\w+ journ', step_txt).group(1))
         loader.add_value('home_team', home)
         loader.add_value('away_team', away)
         score = re.search(u'(\d+)-(\d+)', fiche.xpath('b/text()').extract_first())

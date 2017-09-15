@@ -28,12 +28,14 @@ class SportsfrSpider(CrawlSpider):
         md = response.xpath(
             '(//div[@class="scoreboard"]/div[@class="sb-inner"]/div[@class="sb-content"]/div[@class="sb-metas"])[last()]/text()').extract_first().strip()
         try:
-            dt = dateparser.parse('%s %s' % (md.split()[1], md.split()[3]), languages=['fr'])
+            date_text = re.search(u'Le ([\d|/]+)\D*(\d+h\d+)', md)
+            dt = dateparser.parse('%s %s' % (date_text.group(1), date_text.group(2)), languages=['fr'])
             paristz = timezone('Europe/Paris')
             loc_dt = paristz.localize(dt)
             game_date = loc_dt.isoformat()
         except ValueError:
             game_date = None
+        loader.add_value('step', re.search(u'(\d+)\D+ journ', md).group(1))
         loader.add_value('hash_url', hashlib.md5(response.url).hexdigest())
         loader.add_value('source', 'SPORT')
         loader.add_value('match_date', game_date)
@@ -61,7 +63,10 @@ class SportsfrSpider(CrawlSpider):
 
         loader = items.PlayerItemLoader()
         loader.add_value('name', re.match(href_pattern, href).group(1).replace('-', ' '))
-        mark = pl.xpath('a/span[@class="numero"]/text()').extract()
-        if mark != '-':
+        mark = pl.xpath('a/span[@class="numero"]/text()').extract_first()
+        try:
+            float(mark)
             loader.add_value('rating', mark)
-        yield dict(loader.load_item())
+            yield dict(loader.load_item())
+        except ValueError:
+            pass

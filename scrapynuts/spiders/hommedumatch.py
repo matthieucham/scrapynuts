@@ -29,7 +29,7 @@ class HommedumatchSpider(CrawlSpider):
         loader.add_value('home_score', title_matched.group(4).strip())
         loader.add_value('away_score', title_matched.group(5).strip())
         loader.add_value('step', title_matched.group(1))
-
+        loader.add_xpath('match_date', '//time/@datetime')
         homeplayers = response.xpath('//div[@id="cspc-column-0"]/p/strong/text()').extract()
         awayplayers = response.xpath('//div[@id="cspc-column-1"]/p/strong/text()').extract()
         for pl in homeplayers:
@@ -41,7 +41,6 @@ class HommedumatchSpider(CrawlSpider):
 
     def get_player(self, pl):
         strong_pattern = u'([\w|\-| ]+)\(([\d|,|\.]+)\)[ |:]+'
-        print(pl)
         matched = re.search(strong_pattern, pl)
         if matched:
             loader = items.PlayerItemLoader()
