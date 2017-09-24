@@ -3,8 +3,9 @@ import hashlib
 import re
 
 from scrapy.spiders import CrawlSpider, Rule
-from scrapy.linkextractors import LinkExtractor
 import unidecode
+
+from utils import RestrictTextLinkExtractor
 
 from .. import items
 
@@ -15,7 +16,8 @@ class HommedumatchSpider(CrawlSpider):
     start_urls = ['http://www.hommedumatch.fr/category/france', 'http://www.hommedumatch.fr/category/france/page/2']
 
     rules = (
-        Rule(LinkExtractor(allow=('ligue\-1(.*)notes\-de\-',), unique=True),
+        Rule(RestrictTextLinkExtractor(allow=('ligue\-1',), link_text_regex=u'Ligue 1.+Les notes de',
+                                       unique=True),
              callback='parse_match'),
     )
 
@@ -34,8 +36,8 @@ class HommedumatchSpider(CrawlSpider):
         loader.add_value('away_score', title_matched.group(5).strip())
         loader.add_value('step', title_matched.group(1))
         loader.add_xpath('match_date', '//time/@datetime')
-        homeplayers = response.xpath('//div[@id="cspc-column-0"]/p/strong/text()').extract()
-        awayplayers = response.xpath('//div[@id="cspc-column-1"]/p/strong/text()').extract()
+        homeplayers = response.xpath('//div[@id="cspc-column-0"]/p/*[self::strong or self::b]/text()').extract()
+        awayplayers = response.xpath('//div[@id="cspc-column-1"]/p/*[self::strong or self::b]/text()').extract()
         for pl in homeplayers:
             loader.add_value('players_home', self.get_player(unidecode.unidecode(pl)))
         for pl in awayplayers:
