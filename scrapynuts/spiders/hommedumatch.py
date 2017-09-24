@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
-from scrapy.spiders import CrawlSpider, Rule
-from scrapy.linkextractors import LinkExtractor
 import hashlib
 import re
+
+from scrapy.spiders import CrawlSpider, Rule
+from scrapy.linkextractors import LinkExtractor
+import unidecode
+
 from .. import items
 
 
@@ -22,8 +25,9 @@ class HommedumatchSpider(CrawlSpider):
         loader.add_value('hash_url', hashlib.md5(response.url).hexdigest())
         loader.add_value('source', 'HDM')
         title = response.xpath('//article/header/h1/text()').extract_first()
-        title_matched = re.match(u'Ligue 1 \W (\d+)\D+ Les notes de ([\w|\-| ]+)\W+([\w|\-| ]+) \((\d+)\-(\d+)\)$',
-                                 title)
+        title_matched = re.match(
+            u'Ligue 1 \W (\d+)\D+ Les notes de ([\w|\-| ]+)\s*\W\s*([\w|\-| ]+) \((\d+)\s*\W\s*(\d+)\)$',
+            title)
         loader.add_value('home_team', title_matched.group(2).strip())
         loader.add_value('away_team', title_matched.group(3).strip())
         loader.add_value('home_score', title_matched.group(4).strip())
@@ -33,9 +37,9 @@ class HommedumatchSpider(CrawlSpider):
         homeplayers = response.xpath('//div[@id="cspc-column-0"]/p/strong/text()').extract()
         awayplayers = response.xpath('//div[@id="cspc-column-1"]/p/strong/text()').extract()
         for pl in homeplayers:
-            loader.add_value('players_home', self.get_player(pl))
+            loader.add_value('players_home', self.get_player(unidecode.unidecode(pl)))
         for pl in awayplayers:
-            loader.add_value('players_away', self.get_player(pl))
+            loader.add_value('players_away', self.get_player(unidecode.unidecode(pl)))
 
         yield loader.load_item()
 
