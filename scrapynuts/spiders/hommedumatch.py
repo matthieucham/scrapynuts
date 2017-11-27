@@ -30,8 +30,8 @@ class HommedumatchSpider(CrawlSpider):
         title_matched = re.match(
             u'Ligue 1 \W (\d+)\D+ Les notes de ([\w|\-| ]+)\s*\W\s*([\w|\-| ]+) \((\d+)\s*\W\s*(\d+)\)$',
             title)
-        loader.add_value('home_team', title_matched.group(2).strip())
-        loader.add_value('away_team', title_matched.group(3).strip())
+        loader.add_value('home_team', unidecode.unidecode(title_matched.group(2).strip()))
+        loader.add_value('away_team', unidecode.unidecode(title_matched.group(3).strip()))
         loader.add_value('home_score', title_matched.group(4).strip())
         loader.add_value('away_score', title_matched.group(5).strip())
         loader.add_value('step', title_matched.group(1))
@@ -46,7 +46,7 @@ class HommedumatchSpider(CrawlSpider):
         yield loader.load_item()
 
     def get_player(self, pl):
-        strong_pattern = u'([\w|\-| ]+)\(([\d|,|\.]+)\)[ |:]+'
+        strong_pattern = u'([\w|\-| ]+)\(([\d|,|\.]+)\)'
         matched = re.search(strong_pattern, pl)
         if matched:
             loader = items.PlayerItemLoader()

@@ -42,8 +42,8 @@ class MaxifootSpider(CrawlSpider):
         away = fiche.xpath('b/a[2]/text()').extract_first()
         step_txt = fiche.xpath('b[2]/text()').extract_first()
         loader.add_value('step', re.search(u'(\d+)\w+ journ', step_txt).group(1))
-        loader.add_value('home_team', home)
-        loader.add_value('away_team', away)
+        loader.add_value('home_team', unidecode(home))
+        loader.add_value('away_team', unidecode(away))
         score = re.search(u'(\d+)-(\d+)', fiche.xpath('b/text()').extract_first())
         loader.add_value('home_score', score.group(1))
         loader.add_value('away_score', score.group(2))
@@ -68,6 +68,6 @@ class MaxifootSpider(CrawlSpider):
         matched = re.match(u'(.+) \(([\d,]+)\)$', pl)
         if matched:
             loader = items.PlayerItemLoader()
-            loader.add_value('name', matched.group(1).strip())
+            loader.add_value('name', unidecode(matched.group(1).strip()))
             loader.add_value('rating', matched.group(2).replace(',', '.'))
             yield dict(loader.load_item())

@@ -99,7 +99,7 @@ class OrangesportsSpider(CrawlSpider):
                             ignore_next = False
                         else:
                             loader = items.PlayerItemLoader()
-                            loader.add_value('name', matched.group(1).strip())
+                            loader.add_value('name', unidecode(matched.group(1).strip()))
                             loader.add_value('rating', content)
                             yield dict(loader.load_item())
             previous_tail = blabla.tail

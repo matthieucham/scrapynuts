@@ -2,6 +2,7 @@
 import re
 import json
 import hashlib
+from unidecode import unidecode
 
 from pytz import timezone
 import dateparser
@@ -113,8 +114,8 @@ class WhoscoredSpider(CrawlSpider):
         loader.add_value('hash_url', hashlib.md5(response.url).hexdigest())
         loader.add_value('source', 'WHOSC')
         loader.add_value('match_date', loc_dt.astimezone(paristz).isoformat())
-        loader.add_value('home_team', ws_stats['home']['name'])
-        loader.add_value('away_team', ws_stats['away']['name'])
+        loader.add_value('home_team', unidecode(ws_stats['home']['name']))
+        loader.add_value('away_team', unidecode(ws_stats['away']['name']))
         loader.add_value('home_score', ws_stats['score'].split(' : ')[0])
         loader.add_value('away_score', ws_stats['score'].split(' : ')[1])
 
@@ -133,7 +134,7 @@ class WhoscoredSpider(CrawlSpider):
             # +001 because WS rounds ...5 UP while python rounds it down.
             mark = round(pl['stats']['ratings'][max_key] + .001, 1)
         loader = items.PlayerItemLoader()
-        loader.add_value('name', pl['name'])
+        loader.add_value('name', unidecode(pl['name']))
         loader.add_value('rating', mark)
         loader.add_value('stats', self.get_stats(pl, conceded_goals, total_time, out_time, in_time, event_stats))
         return dict(loader.load_item())
