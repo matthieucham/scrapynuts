@@ -15,7 +15,7 @@ from .. import items
 class OrangesportsSpider(CrawlSpider):
     name = 'orangesports'
     allowed_domains = ['sports.orange.fr']
-    start_urls = ['http://sports.orange.fr/football/ligue-1/calendrier-resultats.html']
+    start_urls = ['https://sports.orange.fr/football/ligue-1/calendrier-resultats.html']
 
     rules = (
         Rule(LinkExtractor(allow='football/ligue-1/match/[\w|-]+-apres-match-\w+\.html$', unique=True),
@@ -43,7 +43,7 @@ class OrangesportsSpider(CrawlSpider):
         loader.add_xpath('home_score', '//div[@class="home-team"]//div[@class="score"]/text()')
         loader.add_xpath('away_score', '//div[@class="guest-team"]//div[@class="score"]/text()')
 
-        strong_in_article = html.fromstring(response.text).xpath('//div[@itemprop="articleBody"]/p//strong')
+        strong_in_article = html.fromstring(response.text).xpath('//div[@itemprop="articleBody"]//strong')
 
         next_is_home = False
         next_is_away = False
