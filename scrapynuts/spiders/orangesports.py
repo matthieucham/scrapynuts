@@ -108,6 +108,9 @@ class OrangesportsSpider(CrawlSpider):
         p = None
         xpath_index = 1
         while p is None or p.tail is None:
-            p = par.xpath('following-sibling::br[%s]' % xpath_index)[0]
-            xpath_index += 1
+            try:
+                p = par.xpath('following-sibling::br[%s]' % xpath_index)[0]
+                xpath_index += 1
+            except IndexError:
+                return par  # new format: return the containing paragraph itself.
         return p
