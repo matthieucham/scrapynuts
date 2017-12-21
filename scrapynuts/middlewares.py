@@ -84,6 +84,7 @@ class SeleniumDownloaderMiddleware(object):
         # only process tagged request or delete this if you want all
         if not request.meta.get('selenium'):
             return
+        time.sleep(random.random())  # randomize behavior to pass incap.
         self.driver.get(request.url)
         if request.meta.get('wait_for_xpath') is not None:
             try:
