@@ -34,7 +34,7 @@ class ScrapynutsPostStatnutsPipeline(object):
         self.exporter = PythonItemExporter(binary=False)
 
     def _get_access_token(self):
-        token = self.oauth.fetch_token(token_url=self.token_url, client_id=self.client_id,
+        token = self.oauth.fetch_token(token_url=self.token_url, client_id=self.client_id, verify=False,
                                        client_secret=self.client_secret, username='scrapynuts', password='scrapynuts')
         return token
 

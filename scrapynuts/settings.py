@@ -92,12 +92,13 @@ ITEM_PIPELINES = {
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
 
 
-SELENIUM_CHROMEDRIVER_PATH = 'D:\dev\seleniumdrivers\chromedriver.exe'
-SELENIUM_CHROMEADBLOCK_PATH = 'D:\dev\seleniumdrivers\Adblock-Plus_v1.13.2.crx'
+SELENIUM_CHROMEDRIVER_PATH = 'C:\seleniumdrivers\chromedriver.exe'
+SELENIUM_CHROMEADBLOCK_PATH = 'C:\seleniumdrivers\Adblock-Plus_v1.13.2.crx'
 
 # TODO remove if not test
-#os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+# os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 STATNUTS_CLIENT_ID = 'F5K43vYvKUnm9OaiLhC0HGh0Sqmq0Zr42uhFX0JS'
 STATNUTS_SECRET = 'HdaNhSy3if0Qm5kkc04TfTiLjT7N97rQsjIcgn1Fx6io7Q4SboIQRctU4JU1F3prBCsJw5DS134p3nrEur9EiqCHNziM8wNqGHTArV6F1VeUju65k99JFHw7PU8SiWuT'
-STATNUTS_URL = 'https://statnuts-app-statnuts.193b.starter-ca-central-1.openshiftapps.com/'
+#STATNUTS_URL = 'http://127.0.0.1:8000/'
+STATNUTS_URL = 'https://statnuts.django.group/'

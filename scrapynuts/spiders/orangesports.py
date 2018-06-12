@@ -61,8 +61,8 @@ class OrangesportsSpider(CrawlSpider):
                     homep_to_search = par.xpath('following-sibling::strong')
                     next_is_home = False
             elif par.text is not None and (
-                        unidecode(par.text).startswith('Entraineur') or unidecode(par.text).startswith(
-                            'Selectionneur')) and awayp_to_search is None:
+                    unidecode(par.text).startswith('Entraineur') or unidecode(par.text).startswith(
+                'Selectionneur')) and awayp_to_search is None:
                 next_is_away = True
             elif next_is_away:
                 away_pars.append(self.get_first_br_with_tail(par))
