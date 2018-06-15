@@ -27,7 +27,7 @@ class WhoscoredSpider(CrawlSpider):
             process_request='add_meta_selenium'),)
 
     def start_requests(self):
-        req = Request('https://www.whoscored.com/Regions/74/Tournaments/22/France-Ligue-1',
+        req = Request('https://www.whoscored.com/Regions/247/Tournaments/36/International-FIFA-World-Cup',
                       dont_filter=True)
         req.meta.update(selenium=True, wait_for_xpath='//table[@id="tournament-fixture"]',
                         click_on_xpath='//div[@id="date-controller"]/a[contains(@class,"previous")]',
