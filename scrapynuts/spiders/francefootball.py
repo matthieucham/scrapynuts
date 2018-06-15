@@ -41,6 +41,9 @@ class FrancefootballSpider(CrawlSpider):
         'https://www.francefootball.fr/generated/json/timeline/page-5.json',
         'https://www.francefootball.fr/generated/json/timeline/page-6.json',
         'https://www.francefootball.fr/generated/json/timeline/page-7.json',
+        'https://www.francefootball.fr/generated/json/timeline/page-8.json',
+        'https://www.francefootball.fr/generated/json/timeline/page-9.json',
+        'https://www.francefootball.fr/generated/json/timeline/page-10.json',
     ]
 
     rules = (
@@ -74,7 +77,7 @@ class FrancefootballSpider(CrawlSpider):
         loader.add_value('match_date', utc_dt.isoformat())
         loader.add_xpath('home_team',
                          '(//h2[contains(text(),"notes")])[1]/text()')
-        loader.add_xpath('home_team',
+        loader.add_xpath('away_team',
                          '(//h2[contains(text(),"notes")])[2]/text()')
         homeplayers = response.xpath(
             '(//h2[contains(text(),"notes")])[1]/following-sibling::div[@class="paragraph"]/div')
@@ -95,7 +98,7 @@ class FrancefootballSpider(CrawlSpider):
     def get_player(self, pl):
         loader = items.PlayerItemLoader()
         name = pl.xpath('text()').extract_first().strip()
-        if name.startswith('Arbitre') or name.startswith('Note d'):
+        if name.startswith('Arbitre') or name.startswith('Note d') or len(name) > 50:
             pass
         else:
             loader.add_value('name', unidecode(name))
