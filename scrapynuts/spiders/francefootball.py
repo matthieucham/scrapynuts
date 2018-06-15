@@ -4,22 +4,30 @@ import re
 import json
 
 from scrapy.spiders import CrawlSpider, Rule
+from scrapy.http import Request, HtmlResponse
+from scrapy.linkextractors import LinkExtractor
+from scrapy.link import Link
 from pytz import timezone
 import dateparser
 from unidecode import unidecode
+from datetime import datetime
+import pytz
 
 from .. import items
-from utils import RestrictTextLinkExtractor
 
 
 class FFTimelineLinkExtractor:
-
     def __init__(self, searched_term=None):
         self.searched_term = searched_term
 
     def extract_links(self, response):
-        json_timeline = json.loads(response)
-        return []
+        try:
+            json_timeline = json.loads(response.text)
+            for it in json_timeline['items']:
+                if self.searched_term in it['titre']:
+                    yield it['fullUrl']
+        except ValueError:
+            pass
 
 
 class FrancefootballSpider(CrawlSpider):
@@ -33,57 +41,70 @@ class FrancefootballSpider(CrawlSpider):
         'https://www.francefootball.fr/generated/json/timeline/page-5.json',
         'https://www.francefootball.fr/generated/json/timeline/page-6.json',
         'https://www.francefootball.fr/generated/json/timeline/page-7.json',
-                  ]
+    ]
 
     rules = (
-        Rule(FFTimelineLinkExtractor(searched_term=u'notes')),
+        Rule(FFTimelineLinkExtractor(searched_term=u'notes'),
+             follow=True,
+             callback='parse_match'),
     )
+
+    def _requests_to_follow(self, response):
+        seen = set()
+        for n, rule in enumerate(self._rules):
+            links = [lnk for lnk in rule.link_extractor.extract_links(response)
+                     if lnk not in seen]
+            if links and rule.process_links:
+                links = rule.process_links(links)
+            for link in links:
+                seen.add(link)
+                r = Request(url=link.url if isinstance(link, Link) else link, callback=self._response_downloaded)
+                r.meta.update(rule=n, link_text=link.text if isinstance(link, Link) else link)
+                yield rule.process_request(r)
 
     def parse_match(self, response):
         self.logger.info('Scraping match %s', response.url)
         loader = items.MatchItemLoader(response=response)
-        md = response.xpath('//article/header/div[@class="art_aut"]/span/b/text()').extract_first()
-        try:
-            dt = dateparser.parse(md, languages=['fr'])
-            paristz = timezone('Europe/Paris')
-            loc_dt = paristz.localize(dt)
-            game_date = loc_dt.isoformat()
-        except ValueError:
-            game_date = None
-        fiche = response.xpath('//article//p[@class="fichtech"]')
+        md = response.xpath(
+            '//div[contains(@class, "js-analytics-timestamp")]/@data-timestamp'
+        ).extract_first()
+        utc_dt = pytz.utc.localize(datetime.utcfromtimestamp(int(md)))
         loader.add_value('hash_url', hashlib.md5(response.url).hexdigest())
-        loader.add_value('source', 'MAXI')
-        loader.add_value('match_date', game_date)
-        home = fiche.xpath('b/a[1]/text()').extract_first()
-        away = fiche.xpath('b/a[2]/text()').extract_first()
-        step_txt = fiche.xpath('b[2]/text()').extract_first()
-        loader.add_value('step', re.search(u'(\d+)\w+ journ', step_txt).group(1))
-        loader.add_value('home_team', unidecode(home))
-        loader.add_value('away_team', unidecode(away))
-        score = re.search(u'(\d+)-(\d+)', fiche.xpath('b/text()').extract_first())
-        loader.add_value('home_score', score.group(1))
-        loader.add_value('away_score', score.group(2))
-
-        notes_section = response.xpath('//article/div/p[@class="titcha"]')
-        ref_text = notes_section.xpath('following-sibling::p[@class="titpar"]/u/text()').extract()
-        if len(ref_text) == 2:
-            notes_home = notes_section.xpath(
-                'following-sibling::p/a[@class="jou1" and parent::p/preceding-sibling::p[@class="titpar"][1]/u/text()="%s"]/text()' %
-                ref_text[0]).extract()
-            notes_away = notes_section.xpath(
-                'following-sibling::p/a[@class="jou1" and parent::p/preceding-sibling::p[@class="titpar"][1]/u/text()="%s"]/text()' %
-                ref_text[1]).extract()
-
-            for pl in notes_home:
-                loader.add_value('players_home', self.get_player(unidecode(pl)))
-            for pl in notes_away:
-                loader.add_value('players_away', self.get_player(unidecode(pl)))
+        loader.add_value('source', 'FF')
+        loader.add_value('match_date', utc_dt.isoformat())
+        loader.add_xpath('home_team',
+                         '(//h2[contains(text(),"notes")])[1]/text()')
+        loader.add_xpath('home_team',
+                         '(//h2[contains(text(),"notes")])[2]/text()')
+        homeplayers = response.xpath(
+            '(//h2[contains(text(),"notes")])[1]/following-sibling::div[@class="paragraph"]/div')
+        first = True
+        for pl in homeplayers:
+            if not first:
+                loader.add_value('players_home', self.get_player(pl))
+            first = False
+        awayplayers = response.xpath(
+            '(//h2[contains(text(),"notes")])[2]/following-sibling::div[@class="paragraph"]/div')
+        first = True
+        for pl in awayplayers:
+            if not first:
+                loader.add_value('players_away', self.get_player(pl))
+            first = False
         yield loader.load_item()
 
     def get_player(self, pl):
-        matched = re.match(u'(.+) \(([\d,]+)\)$', pl)
-        if matched:
-            loader = items.PlayerItemLoader()
-            loader.add_value('name', unidecode(matched.group(1).strip()))
-            loader.add_value('rating', matched.group(2).replace(',', '.'))
-            yield dict(loader.load_item())
+        loader = items.PlayerItemLoader()
+        name = pl.xpath('text()').extract_first().strip()
+        if name.startswith('Arbitre') or name.startswith('Note d'):
+            pass
+        else:
+            loader.add_value('name', unidecode(name))
+            rating = pl.xpath('span/text()').extract_first()
+            try:
+                float(rating)
+                loader.add_value('rating', rating)
+                yield dict(loader.load_item())
+            except ValueError:
+                pass
+            except TypeError:
+                pass
