@@ -72,7 +72,13 @@ class SportexpressruSpider(CrawlSpider):
         try:
             loader = items.PlayerItemLoader()
             loader.add_value('name', pl['name'])
+            float(pl['info']['seEstimation'])
             loader.add_value('rating', pl['info']['seEstimation'])
             yield dict(loader.load_item())
         except KeyError:
             pass
+        except ValueError:
+            pass
+        except TypeError:
+            pass
+

@@ -80,11 +80,11 @@ class FrancefootballSpider(CrawlSpider):
         loader.add_xpath('away_team',
                          '(//h2[contains(text(),"notes")])[2]/text()')
         homeplayers = response.xpath(
-            '(//h2[contains(text(),"notes")])[1]/following-sibling::div[@class="paragraph"]/div')
+            '(//h2[contains(text(),"notes")])[1]/following-sibling::div[@class="paragraph"][1]/div')
         for pl in homeplayers:
             loader.add_value('players_home', self.get_player(pl))
         awayplayers = response.xpath(
-            '(//h2[contains(text(),"notes")])[2]/following-sibling::div[@class="paragraph"]/div')
+            '(//h2[contains(text(),"notes")])[2]/following-sibling::div[@class="paragraph"][1]/div')
         for pl in awayplayers:
             loader.add_value('players_away', self.get_player(pl))
         yield loader.load_item()
@@ -92,7 +92,7 @@ class FrancefootballSpider(CrawlSpider):
     def get_player(self, pl):
         loader = items.PlayerItemLoader()
         name = pl.xpath('text()').extract_first().strip()
-        if name.startswith('Arbitre') or name.startswith('Note d') or len(name) > 50:
+        if name.startswith('Arbitre') or name.startswith('Note d') or len(name) > 50 or len(name) == 0:
             pass
         else:
             loader.add_value('name', unidecode(name))
