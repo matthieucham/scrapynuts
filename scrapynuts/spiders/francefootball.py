@@ -81,18 +81,12 @@ class FrancefootballSpider(CrawlSpider):
                          '(//h2[contains(text(),"notes")])[2]/text()')
         homeplayers = response.xpath(
             '(//h2[contains(text(),"notes")])[1]/following-sibling::div[@class="paragraph"]/div')
-        first = True
         for pl in homeplayers:
-            if not first:
-                loader.add_value('players_home', self.get_player(pl))
-            first = False
+            loader.add_value('players_home', self.get_player(pl))
         awayplayers = response.xpath(
             '(//h2[contains(text(),"notes")])[2]/following-sibling::div[@class="paragraph"]/div')
-        first = True
         for pl in awayplayers:
-            if not first:
-                loader.add_value('players_away', self.get_player(pl))
-            first = False
+            loader.add_value('players_away', self.get_player(pl))
         yield loader.load_item()
 
     def get_player(self, pl):
