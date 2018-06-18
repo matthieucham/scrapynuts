@@ -45,6 +45,17 @@ class FrancefootballSpider(CrawlSpider):
         'https://www.francefootball.fr/generated/json/timeline/page-8.json',
         'https://www.francefootball.fr/generated/json/timeline/page-9.json',
         'https://www.francefootball.fr/generated/json/timeline/page-10.json',
+        'https://www.francefootball.fr/generated/json/timeline/page-11.json',
+        'https://www.francefootball.fr/generated/json/timeline/page-12.json',
+        'https://www.francefootball.fr/generated/json/timeline/page-13.json',
+        'https://www.francefootball.fr/generated/json/timeline/page-14.json',
+        'https://www.francefootball.fr/generated/json/timeline/page-15.json',
+        'https://www.francefootball.fr/generated/json/timeline/page-16.json',
+        'https://www.francefootball.fr/generated/json/timeline/page-17.json',
+        'https://www.francefootball.fr/generated/json/timeline/page-18.json',
+        'https://www.francefootball.fr/generated/json/timeline/page-19.json',
+        'https://www.francefootball.fr/generated/json/timeline/page-20.json',
+        'https://www.francefootball.fr/generated/json/timeline/page-21.json',
     ]
 
     rules = (
@@ -88,17 +99,21 @@ class FrancefootballSpider(CrawlSpider):
             '(//h2[contains(text(),"notes")])[2]/following-sibling::div[@class="paragraph"][1]//span')
         for pl in awayplayers:
             loader.add_value('players_away', self.get_player(pl))
+        print loader.load_item()
         yield loader.load_item()
 
     def get_player(self, pl):
         try:
             loader = items.PlayerItemLoader()
             try:
-                name = pl.xpath('../text()').extract_first().strip()
+                name = self._extract_name(pl)
             except AttributeError:
                 name = None
             if not name:
-                name = pl.xpath('../strong/text()').extract_first().strip()
+                name = self._extract_name(pl, '../strong/text()')
+            if not name:
+                name = self._extract_name(pl, '../../text()')
+            print 'Found name %s' % name
             if name.startswith('Arbitre') or name.startswith('Note d') or len(name) > 50 or len(name) == 0:
                 pass
             else:
@@ -116,3 +131,15 @@ class FrancefootballSpider(CrawlSpider):
             pass
         except AttributeError:
             pass
+
+    def _extract_name(self, pl, xpathexpr='../text()'):
+        possibilities = pl.xpath(xpathexpr)
+        if len(possibilities) == 0:
+            return None
+        elif len(possibilities) == 1:
+            return pl.xpath(xpathexpr).extract_first().strip()
+        else:
+            curridx = len(pl.xpath('preceding-sibling::span'))
+            if curridx < len(possibilities.extract()):
+                return possibilities.extract()[curridx].strip()
+            return None
