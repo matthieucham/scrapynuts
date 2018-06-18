@@ -16,6 +16,14 @@ import pytz
 from .. import items
 
 
+class IdleLinkExtractor:
+    def __init__(self, url):
+        self.url = url
+
+    def extract_links(self, response):
+        yield self.url
+
+
 class FFTimelineLinkExtractor:
     def __init__(self, searched_term=None):
         self.searched_terms = searched_term
@@ -59,6 +67,9 @@ class FrancefootballSpider(CrawlSpider):
     ]
 
     rules = (
+        Rule(IdleLinkExtractor(
+            url=u'https://www.francefootball.fr/news/Le-debrief-mondial-avec-le-gagnant-le-perdant-et-les-notes-de-danemark-perou-1-0/912111'),
+            callback='parse_match'),
         Rule(FFTimelineLinkExtractor(searched_term=(u'notes', u'débrief')),
              follow=True,
              callback='parse_match'),
