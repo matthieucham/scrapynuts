@@ -18,14 +18,15 @@ from .. import items
 
 class FFTimelineLinkExtractor:
     def __init__(self, searched_term=None):
-        self.searched_term = searched_term
+        self.searched_terms = searched_term
 
     def extract_links(self, response):
         try:
             json_timeline = json.loads(response.text)
             for it in json_timeline['items']:
-                if self.searched_term in it['titre']:
-                    yield it['fullUrl']
+                for st in self.searched_terms:
+                    if st in it['titre']:
+                        yield it['fullUrl']
         except ValueError:
             pass
 
@@ -47,7 +48,7 @@ class FrancefootballSpider(CrawlSpider):
     ]
 
     rules = (
-        Rule(FFTimelineLinkExtractor(searched_term=u'notes'),
+        Rule(FFTimelineLinkExtractor(searched_term=(u'notes', u'débrief')),
              follow=True,
              callback='parse_match'),
     )
@@ -80,28 +81,38 @@ class FrancefootballSpider(CrawlSpider):
         loader.add_xpath('away_team',
                          '(//h2[contains(text(),"notes")])[2]/text()')
         homeplayers = response.xpath(
-            '(//h2[contains(text(),"notes")])[1]/following-sibling::div[@class="paragraph"][1]/div')
+            '(//h2[contains(text(),"notes")])[1]/following-sibling::div[@class="paragraph"][1]//span')
         for pl in homeplayers:
             loader.add_value('players_home', self.get_player(pl))
         awayplayers = response.xpath(
-            '(//h2[contains(text(),"notes")])[2]/following-sibling::div[@class="paragraph"][1]/div')
+            '(//h2[contains(text(),"notes")])[2]/following-sibling::div[@class="paragraph"][1]//span')
         for pl in awayplayers:
             loader.add_value('players_away', self.get_player(pl))
         yield loader.load_item()
 
     def get_player(self, pl):
-        loader = items.PlayerItemLoader()
-        name = pl.xpath('text()').extract_first().strip()
-        if name.startswith('Arbitre') or name.startswith('Note d') or len(name) > 50 or len(name) == 0:
-            pass
-        else:
-            loader.add_value('name', unidecode(name))
-            rating = pl.xpath('span/text()').extract_first()
+        try:
+            loader = items.PlayerItemLoader()
             try:
-                float(rating)
-                loader.add_value('rating', rating)
-                yield dict(loader.load_item())
-            except ValueError:
+                name = pl.xpath('../text()').extract_first().strip()
+            except AttributeError:
+                name = None
+            if not name:
+                name = pl.xpath('../strong/text()').extract_first().strip()
+            if name.startswith('Arbitre') or name.startswith('Note d') or len(name) > 50 or len(name) == 0:
                 pass
-            except TypeError:
-                pass
+            else:
+                loader.add_value('name', unidecode(name))
+                rating = pl.xpath('text()').extract_first()
+                if not rating:
+                    rating = pl.xpath('strong/text()').extract_first()
+                if rating:
+                    float(rating.strip())
+                    loader.add_value('rating', rating.strip())
+                    yield dict(loader.load_item())
+        except ValueError:
+            pass
+        except TypeError:
+            pass
+        except AttributeError:
+            pass
