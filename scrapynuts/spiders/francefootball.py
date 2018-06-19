@@ -70,9 +70,9 @@ class FrancefootballSpider(CrawlSpider):
         Rule(IdleLinkExtractor(
             url=u'https://www.francefootball.fr/news/Le-debrief-mondial-avec-le-gagnant-le-perdant-et-les-notes-de-danemark-perou-1-0/912111'),
             callback='parse_match'),
-        Rule(FFTimelineLinkExtractor(searched_term=(u'notes', u'débrief')),
-             follow=True,
-             callback='parse_match'),
+        # Rule(FFTimelineLinkExtractor(searched_term=(u'notes', u'débrief')),
+        #      follow=True,
+        #      callback='parse_match'),
     )
 
     def _requests_to_follow(self, response):
@@ -106,9 +106,17 @@ class FrancefootballSpider(CrawlSpider):
             '(//h2[contains(text(),"notes")])[1]/following-sibling::div[@class="paragraph"][1]//span')
         for pl in homeplayers:
             loader.add_value('players_home', self.get_player(pl))
+        homeplayersb = response.xpath(
+            '(//h2[contains(text(),"notes")])[1]/following-sibling::div[@class="paragraph"][1]//b')
+        for pl in homeplayersb:
+            loader.add_value('players_home', self.get_player(pl))
         awayplayers = response.xpath(
             '(//h2[contains(text(),"notes")])[2]/following-sibling::div[@class="paragraph"][1]//span')
         for pl in awayplayers:
+            loader.add_value('players_away', self.get_player(pl))
+        awayplayersb = response.xpath(
+            '(//h2[contains(text(),"notes")])[2]/following-sibling::div[@class="paragraph"][1]//b')
+        for pl in awayplayersb:
             loader.add_value('players_away', self.get_player(pl))
         print loader.load_item()
         yield loader.load_item()
@@ -125,13 +133,16 @@ class FrancefootballSpider(CrawlSpider):
             if not name:
                 name = self._extract_name(pl, '../../text()')
             print 'Found name %s' % name
-            if name.startswith('Arbitre') or name.startswith('Note d') or len(name) > 50 or len(name) == 0:
+            if 'rbitre' in name or name.startswith('Note d') or len(name) > 50 or len(name) == 0:
                 pass
             else:
                 loader.add_value('name', unidecode(name))
-                rating = pl.xpath('text()').extract_first()
+                try:
+                    rating = pl.xpath('text()').extract_first().strip()
+                except AttributeError:
+                    rating = None
                 if not rating:
-                    rating = pl.xpath('strong/text()').extract_first()
+                    rating = pl.xpath('strong/text()').extract_first().strip()
                 if rating:
                     float(rating.strip())
                     loader.add_value('rating', rating.strip())
@@ -150,7 +161,11 @@ class FrancefootballSpider(CrawlSpider):
         elif len(possibilities) == 1:
             return pl.xpath(xpathexpr).extract_first().strip()
         else:
+            cleaned_possibilities = self._clean(possibilities.extract())
             curridx = len(pl.xpath('preceding-sibling::span'))
-            if curridx < len(possibilities.extract()):
-                return possibilities.extract()[curridx].strip()
+            if curridx < len(cleaned_possibilities):
+                return cleaned_possibilities[curridx].strip()
             return None
+
+    def _clean(self, possibilities):
+        return [p.strip() for p in possibilities if re.match(r'\w+', p)]
