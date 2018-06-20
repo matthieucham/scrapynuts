@@ -13,7 +13,9 @@ import hashlib
 class KickerdeSpider(CrawlSpider):
     name = 'kickerde'
     allowed_domains = ['kicker.de']
-    start_urls = ['http://www.kicker.de/news/fussball/weltmeisterschaft/spiele/weltmeisterschaft/2018/spieltag.html']
+    start_urls = ['http://www.kicker.de/news/fussball/weltmeisterschaft/spiele/weltmeisterschaft/2018/spieltag.html',
+                  'http://www.kicker.de/news/fussball/weltmeisterschaft/spiele/weltmeisterschaft/2018/1/0/spieltag.html',
+                  ]
 
     rules = (
         Rule(LinkExtractor(allow='football/directs/ligue-1/', restrict_xpaths='//table[@class="nwResultats"]')),

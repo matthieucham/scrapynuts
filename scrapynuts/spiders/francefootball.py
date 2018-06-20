@@ -67,9 +67,9 @@ class FrancefootballSpider(CrawlSpider):
     ]
 
     rules = (
-        Rule(IdleLinkExtractor(
-            url=u'http://app.francefootball.fr/news/Coupe-du-monde-groupe-g-les-notes-de-belgique-panama/912803'),
-            callback='parse_match'),
+        # Rule(IdleLinkExtractor(
+        #     url=u'https://www.francefootball.fr/news/Coupe-du-monde-2018-groupe-a-la-russie-vers-les-huitiemes-l-egypte-vers-la-sortie-debrief-et-notes/913274'),
+        #     callback='parse_match'),
         Rule(FFTimelineLinkExtractor(searched_term=(u'notes', u'débrief')),
              follow=True,
              callback='parse_match'),
@@ -161,14 +161,14 @@ class FrancefootballSpider(CrawlSpider):
         elif len(possibilities) == 1:
             return pl.xpath(xpathexpr).extract_first().strip()
         else:
-            # cleaned_possibilities = self._clean(possibilities.extract())
-            # curridx = len(pl.xpath('preceding-sibling::span'))
-            # if curridx == 0:
-            #     # peut-être inversion span / strong ?
-            #     curridx = len(pl.xpath('../preceding-sibling::span'))
-            # if curridx < len(cleaned_possibilities):
-            #     return cleaned_possibilities[curridx].strip()
+            cleaned_possibilities = self._clean(possibilities.extract())
+            curridx = len(pl.xpath('preceding-sibling::span'))
+            if curridx == 0:
+                # peut-être inversion span / strong ?
+                curridx = len(pl.xpath('../preceding-sibling::span'))
+            if curridx < len(cleaned_possibilities):
+                return cleaned_possibilities[curridx].strip()
             return None
 
-    # def _clean(self, possibilities):
-    #     return [p.strip() for p in possibilities if re.match(r'\w+', p) and 0 < len(p.strip()) <= 50]
+    def _clean(self, possibilities):
+        return [p.strip() for p in possibilities if re.match(r'\w+', p) and 0 < len(p.strip()) <= 50]
