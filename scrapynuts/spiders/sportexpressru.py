@@ -45,7 +45,7 @@ class SportexpressruSpider(CrawlSpider):
             return
         loader = items.MatchItemLoader(items.MatchItem(), response=response)
         try:
-            dt = dateparser.parse(json_data['date'])
+            dt = dateparser.parse(json_data['date'], languages=['ru'])
             moscowtz = timezone('Europe/Moscow')
             loc_dt = moscowtz.localize(dt)
             game_date = loc_dt.isoformat()
