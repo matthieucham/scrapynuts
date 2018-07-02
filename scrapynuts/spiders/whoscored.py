@@ -52,6 +52,7 @@ class WhoscoredSpider(CrawlSpider):
         self.logger.info('Scraping match %s', response.url)
         javascript_stats = response.xpath(
             '//div[@id="layout-content-wrapper"]/script[@type="text/javascript"]/text()').extract_first()
+        grab_score_pattern = r"([\d]+)"
         pattern = r"(?:matchCentreData =)(.*);"
         m = re.search(pattern, javascript_stats).group().strip()[len('matchCentreData ='):][:-1]
         ws_stats = json.loads(m)
@@ -117,8 +118,8 @@ class WhoscoredSpider(CrawlSpider):
         loader.add_value('match_date', loc_dt.astimezone(paristz).isoformat())
         loader.add_value('home_team', unidecode(ws_stats['home']['name']))
         loader.add_value('away_team', unidecode(ws_stats['away']['name']))
-        loader.add_value('home_score', ws_stats['score'].split(' : ')[0])
-        loader.add_value('away_score', ws_stats['score'].split(' : ')[1])
+        loader.add_value('home_score', re.search(grab_score_pattern, ws_stats['score'].split(' : ')[0]).group(1))
+        loader.add_value('away_score', re.search(grab_score_pattern, ws_stats['score'].split(' : ')[1]).group(1))
 
         for field in ['home', 'away']:
             conceded_goals = goals_time['away' if field == 'home' else 'home']
