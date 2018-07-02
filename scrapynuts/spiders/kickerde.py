@@ -43,10 +43,18 @@ class KickerdeSpider(CrawlSpider):
                          '(//tr[@id="SpielpaarungLiveTitleRow"]/td[@class="lttabvrnName"])[1]/h1/a/text()')
         loader.add_xpath('away_team',
                          '(//tr[@id="SpielpaarungLiveTitleRow"]/td[@class="lttabvrnName"])[2]/h1/a/text()')
-        loader.add_xpath('home_score',
-                         '//div[contains(@class, "scoreboard")]//div[@id="ovBoardExtMainH"]/text()')
-        loader.add_xpath('away_score',
-                         '//div[contains(@class, "scoreboard")]//div[@id="ovBoardExtMainA"]/text()')
+        if response.xpath(
+                '//div[contains(@class, "scoreboard")]//div[contains(@class,"ergBoardExtB")]/div[@class="halbzeitText"]/text()').extract_first().strip() == 'im Elfmeterschiessen':
+            score = response.xpath(
+                '//div[contains(@class, "scoreboard")]//div[contains(@class,"ergBoardExtB")]/div[@class="halbzeitValue"]/span[@class="verlVal"]/text()').extract_first().strip()
+            grab_score_pattern = r"([\d]+)[\D]+([\d]+)"
+            loader.add_value('home_score', re.search(grab_score_pattern, score).group(1))
+            loader.add_value('away_score', re.search(grab_score_pattern, score).group(2))
+        else:
+            loader.add_xpath('home_score',
+                             '//div[contains(@class, "scoreboard")]//div[@id="ovBoardExtMainH"]/text()')
+            loader.add_xpath('away_score',
+                             '//div[contains(@class, "scoreboard")]//div[@id="ovBoardExtMainA"]/text()')
         # field = response.xpath('//div[@class="stade"]')
         aufstellungen = response.xpath('//table[@summary="Vereinsliste"]')
         homeplayers = aufstellungen[0].xpath('//tr[@id="ctl00_PlaceHolderHalf_ctl00_heim2"]//div[@class="spielerdiv"]')
