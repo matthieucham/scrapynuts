@@ -93,7 +93,7 @@ ITEM_PIPELINES = {
 
 
 SELENIUM_CHROMEDRIVER_PATH = 'C:\seleniumdrivers\chromedriver.exe'
-SELENIUM_CHROMEADBLOCK_PATH = 'C:\seleniumdrivers\Adblock-Plus_v1.13.2.crx'
+SELENIUM_CHROMEADBLOCK_PATH = 'C:\seleniumdrivers\Adblock-Plus.crx'
 
 # TODO remove if not test
 # os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
