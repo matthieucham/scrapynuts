@@ -47,27 +47,30 @@ class HommedumatchSpider(CrawlSpider):
             game_date = None
         loader.add_value('match_date', game_date)
         players_nodes = response.xpath(
-            '//article/div[@class="td-post-text-content"]/p/*[self::strong or self::b]')
+            '//article/div[@class="td-post-text-content"]//p/*[self::strong or self::b]')
         homeplayers = []
         awayplayers = []
         pl_with_note_pattern = r'\b[\s\w\'\.\-]+\s\([\d,\.]{1,3}\)'
         next_is_home = False
         next_is_away = False
         for pn in players_nodes:
-            if pn.xpath('./text()').extract_first().startswith('Homme du match'):
-                continue
-            if len(pn.xpath('./parent::p/@style').extract()) > 0:
-                if next_is_home:
-                    next_is_away = True
-                    next_is_home = False
+            try:
+                if pn.xpath('./text()').extract_first().startswith('Homme du match'):
+                    continue
+                if len(pn.xpath('./parent::p/@style').extract()) > 0:
+                    if next_is_home:
+                        next_is_away = True
+                        next_is_home = False
+                    else:
+                        next_is_home = True
+                        next_is_away = False
                 else:
-                    next_is_home = True
-                    next_is_away = False
-            else:
-                if next_is_home:
-                    homeplayers.append(pn.xpath('./text()').extract_first())
-                elif next_is_away:
-                    awayplayers.append(pn.xpath('./text()').extract_first())
+                    if next_is_home:
+                        homeplayers.append(pn.xpath('./text()').extract_first())
+                    elif next_is_away:
+                        awayplayers.append(pn.xpath('./text()').extract_first())
+            except AttributeError:
+                pass  # skip player_node if any parsing problem
         for pl in homeplayers:
             loader.add_value('players_home', self.get_player(unidecode.unidecode(pl)))
         for pl in awayplayers:
