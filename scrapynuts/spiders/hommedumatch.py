@@ -18,7 +18,7 @@ class HommedumatchSpider(CrawlSpider):
     start_urls = ['http://www.hommedumatch.fr/articles/france', 'http://www.hommedumatch.fr/articles/france/page/2']
 
     rules = (
-        Rule(RestrictTextLinkExtractor(allow=('ligue\-1',), link_text_regex=u'Ligue 1.+Les notes de',
+        Rule(RestrictTextLinkExtractor(allow=('ligue\-1',), link_text_regex=u'Ligue 1.+Les notes d',
                                        unique=True),
              callback='parse_match'),
     )
@@ -30,7 +30,7 @@ class HommedumatchSpider(CrawlSpider):
         loader.add_value('source', 'HDM')
         title = unidecode.unidecode(response.xpath('//article/header/h1/text()').extract_first())
         title_matched = re.match(
-            u'Ligue 1 \W (\d+)\D+ Les notes de ([\w|\-| ]+)\s*\W\s*([\w|\-| ]+) \((\d+)\s*\W\s*(\d+)\)$',
+            u'Ligue 1 \W (\d+)\D+ Les notes d.\s?([\w|\-| ]+)\s*\W\s*([\w|\-| ]+) \((\d+)\s*\W\s*(\d+)\)$',
             title)
         loader.add_value('home_team', title_matched.group(2).strip())
         loader.add_value('away_team', title_matched.group(3).strip())
@@ -82,7 +82,10 @@ class HommedumatchSpider(CrawlSpider):
         strong_pattern = u'([\w|\-| ]+)\(([\d|,|\.]+)\)'
         matched = re.search(strong_pattern, pl)
         if matched:
-            loader = items.PlayerItemLoader()
-            loader.add_value('name', matched.group(1).strip())
-            loader.add_value('rating', matched.group(2).strip().replace(',', '.'))
-            yield dict(loader.load_item())
+            name = matched.group(1).strip()
+            rating = matched.group(2).strip().replace(',', '.')
+            if name and rating:
+                loader = items.PlayerItemLoader()
+                loader.add_value('name', name)
+                loader.add_value('rating', rating)
+                yield dict(loader.load_item())
