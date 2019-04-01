@@ -39,7 +39,7 @@ class HommedumatchSpider(CrawlSpider):
         loader.add_value('step', title_matched.group(1))
         md = response.xpath('//time/text()').extract_first()
         try:
-            dt = dateparser.parse(md, languages=['fr'])
+            dt = dateparser.parse(md, languages=['fr', 'en'])
             paristz = timezone('Europe/Paris')
             loc_dt = paristz.localize(dt)
             game_date = loc_dt.isoformat()
