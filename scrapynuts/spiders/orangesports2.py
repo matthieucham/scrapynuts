@@ -15,7 +15,8 @@ from .. import items
 class Orangesports2Spider(CrawlSpider):
     name = 'orangesports2'
     allowed_domains = ['sports.orange.fr']
-    start_urls = ['https://sports.orange.fr/football/ligue-1/calendrier-resultats.html']
+    start_urls = ['https://sports.orange.fr/football/ligue-1/calendrier-resultats.html',
+                  'https://sports.orange.fr/football/ligue-1/calendrier-resultats-27eme-journee.html']
 
     rules = (
         Rule(LinkExtractor(allow='football/ligue-1/match/[\w|-]+-apres-match-\w+\.html$', unique=True),
@@ -44,8 +45,9 @@ class Orangesports2Spider(CrawlSpider):
         loader.add_xpath('away_score', '//div[@class="guest-team"]//div[@class="score"]/text()')
 
         debrief_par_text = \
-            html.fromstring(response.text).xpath('string(//div[@itemprop="articleBody"]/p/strong/..)').split(
+            html.fromstring(response.text).xpath('string(//div[@itemprop="articleBody"])').split(
                 'La feuille de match', 1)[1]
+
         notes_zone_pattern = r'(\b[\s\w\.]+(?:\(cap\))?\s\([^()]*?\d\).*?N\'ont pas particip)'
         matches = re.findall(notes_zone_pattern, unidecode(debrief_par_text))
         loader.add_value('players_home', self.get_player(matches[0]))
