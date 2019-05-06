@@ -10,6 +10,8 @@
 # http://scrapy.readthedocs.org/en/latest/topics/spider-middleware.html
 import os
 
+ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
+
 BOT_NAME = 'scrapynuts'
 
 SPIDER_MODULES = ['scrapynuts.spiders']
@@ -92,8 +94,8 @@ ITEM_PIPELINES = {
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
 
 
-SELENIUM_CHROMEDRIVER_PATH = 'C:\seleniumdrivers\chromedriver.exe'
-SELENIUM_CHROMEADBLOCK_PATH = 'C:\seleniumdrivers\Adblock-Plus.crx'
+SELENIUM_CHROMEDRIVER_PATH ='%s\\resources\\chromedriver.exe' % ROOT_DIR
+SELENIUM_CHROMEADBLOCK_PATH = '%s\\resources\\Adblock-Plus.crx' % ROOT_DIR
 
 # TODO remove if not test
 # os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'

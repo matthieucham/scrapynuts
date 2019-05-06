@@ -16,7 +16,7 @@ class Orangesports2Spider(CrawlSpider):
     name = 'orangesports2'
     allowed_domains = ['sports.orange.fr']
     start_urls = ['https://sports.orange.fr/football/ligue-1/calendrier-resultats.html',
-                  'https://sports.orange.fr/football/ligue-1/calendrier-resultats-27eme-journee.html']
+                  'https://sports.orange.fr/football/ligue-1/calendrier-resultats-34eme-journee.html']
 
     rules = (
         Rule(LinkExtractor(allow='football/ligue-1/match/[\w|-]+-apres-match-\w+\.html$', unique=True),
