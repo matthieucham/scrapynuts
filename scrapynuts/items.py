@@ -55,3 +55,26 @@ class PlayerItemLoader(ItemLoader):
 class PlayerStatItemLoader(ItemLoader):
     default_item_class = PlayerStatItem
     default_output_processor = TakeFirst()
+
+
+class TeamItem(scrapy.Item):
+    name = scrapy.Field()
+    players = scrapy.Field(output_processor=Identity())
+
+
+class TeamItemLoader(ItemLoader):
+    default_item_class = TeamItem
+    default_output_processor = TakeFirst()
+
+
+class TeamPlayerItem(scrapy.Item):
+    first_name = scrapy.Field()
+    last_name = scrapy.Field()
+    surname = scrapy.Field()
+    position = scrapy.Field()
+    dob = scrapy.Field()
+
+
+class TeamPlayerItemLoader(ItemLoader):
+    default_item_class = TeamPlayerItem
+    default_output_processor = TakeFirst()

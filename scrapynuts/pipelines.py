@@ -23,6 +23,13 @@ class ScrapynutsFilterPipeline(object):
         return item
 
 
+class ScrapynutsTeamFilterPipeline(object):
+    def process_item(self, item, spider):
+        if 'players' not in item:
+            raise DropItem('Filtered incomplete item')
+        return item
+
+
 class ScrapynutsPostStatnutsPipeline(object):
     def __init__(self):
         self.client_id = settings.STATNUTS_CLIENT_ID
@@ -45,3 +52,27 @@ class ScrapynutsPostStatnutsPipeline(object):
         hash_url = item_json.pop('hash_url') + '/'
         self.oauth.post(urlparse.urljoin(self.sn_store_url, hash_url), json=item_json)
         print 'Item stored with hash = %s' % item['hash_url']
+
+
+class ScrapynutsPostTeamStatnutsPipeline(object):
+    def __init__(self):
+        self.client_id = settings.STATNUTS_CLIENT_ID
+        self.client_secret = settings.STATNUTS_SECRET
+        self.sn_store_url = settings.STATNUTS_URL + 'scrap/teams/'
+        self.token_url = settings.STATNUTS_URL + 'o/token/'
+        self.access_token = None
+        self.oauth = OAuth2Session(client=LegacyApplicationClient(client_id=self.client_id))
+        self.exporter = PythonItemExporter(binary=False)
+
+    def _get_access_token(self):
+        token = self.oauth.fetch_token(token_url=self.token_url, client_id=self.client_id, verify=False,
+                                       client_secret=self.client_secret, username='scrapynuts', password='scrapynuts')
+        return token
+
+    def process_item(self, item, spider):
+        if self.access_token is None:
+            self.access_token = self._get_access_token()
+        item_json = self.exporter.export_item(item)
+        team_name = item_json.get('name') + '/'
+        self.oauth.post(urlparse.urljoin(self.sn_store_url, team_name), json=item_json)
+        print 'Item stored with hash = %s' % item['name']
