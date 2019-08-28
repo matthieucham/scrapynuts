@@ -10,6 +10,7 @@ import random
 from scrapy import signals
 from scrapy.http import HtmlResponse
 from selenium import webdriver
+from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -96,7 +97,16 @@ class SeleniumDownloaderMiddleware(object):
         if request.meta.get('click_on_xpath') is not None:
             target = self.driver.find_element_by_xpath(request.meta.get('click_on_xpath'))
             time.sleep(random.random())
-            target.click()
+            try:
+                target.click()
+            except WebDriverException as e:
+                # target is not clickable probably because of a modal in front : quantcast
+                try:
+                    self.driver.find_element_by_css_selector('button[class="qc-cmp-button"]').click()
+                    WebDriverWait(self.driver, 10).until(
+                        EC.invisibility_of_element_located((By.CLASS_NAME, 'qc-cmp-ui-container')))
+                finally:
+                    pass
             if request.meta.get('wait_after_click') is not None:
                 try:
                     WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.XPATH,

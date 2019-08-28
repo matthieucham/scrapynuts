@@ -13,12 +13,11 @@ import hashlib
 class SportsfrSpider(CrawlSpider):
     name = 'sportsfr'
     allowed_domains = ['sports.fr']
-    start_urls = ['http://www.sports.fr/football/ligue-1/resultats.html',
-                  'http://www.sports.fr/football/ligue-1/2019/resultats/34e-journee.html']
+    start_urls = ['http://www.sports.fr/football/ligue-1/resultats.html']
 
     rules = (
-        Rule(LinkExtractor(allow='football/directs/ligue-1/', restrict_xpaths='//table[@class="nwResultats"]')),
-        Rule(LinkExtractor(allow='football/compte-rendu/ligue-1/',
+        Rule(LinkExtractor(allow='football/directs/', restrict_xpaths='//table[@class="nwResultats"]')),
+        Rule(LinkExtractor(allow='football/compte-rendu/',
                            restrict_xpaths='//div[@id="direct"]'), callback='parse_match')
     )
 
