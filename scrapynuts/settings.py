@@ -96,7 +96,9 @@ ITEM_PIPELINES = {
 
 
 SELENIUM_CHROMEDRIVER_PATH = '%s\\resources\\chromedriver.exe' % ROOT_DIR
-SELENIUM_CHROMEADBLOCK_PATH = '%s\\resources\\Adblock-Plus.crx' % ROOT_DIR
+SELENIUM_CHROMEADBLOCK_PATH = '%s\\resources\\extension_3_7_0_0.crx' % ROOT_DIR
+SELENIUM_GECKODRIVER_PATH = '%s\\resources\\geckodriver.exe' % ROOT_DIR
+SELENIUM_GECKOADBLOCK_PATH = '%s\\resources\\adblock_plus-3.6.3-an_fx.xpi' % ROOT_DIR
 
 # TODO remove if not test
 # os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
