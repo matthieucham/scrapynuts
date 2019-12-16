@@ -88,7 +88,7 @@ class SeleniumDownloaderMiddleware(object):
         # only process tagged request or delete this if you want all
         if not request.meta.get('selenium'):
             return
-        time.sleep(random.random())  # randomize behavior to pass incap.
+        time.sleep(random.random()*5)  # randomize behavior to pass incap.
         self.driver.get(request.url)
         if request.meta.get('wait_for_xpath') is not None:
             try:
@@ -99,7 +99,7 @@ class SeleniumDownloaderMiddleware(object):
                 pass
         if request.meta.get('click_on_xpath') is not None:
             target = self.driver.find_element_by_xpath(request.meta.get('click_on_xpath'))
-            time.sleep(random.random())
+            time.sleep(random.random()*5)
             try:
                 target.click()
             except WebDriverException as e:
