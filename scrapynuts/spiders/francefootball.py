@@ -102,24 +102,73 @@ class FrancefootballSpider(CrawlSpider):
                          '(//h2[contains(text(),"notes")])[1]/text()')
         loader.add_xpath('away_team',
                          '(//h2[contains(text(),"notes")])[2]/text()')
-        homeplayers = response.xpath(
-            '(//h2[contains(text(),"notes")])[1]/following-sibling::div[@class="paragraph"][1]//span')
-        for pl in homeplayers:
-            loader.add_value('players_home', self.get_player(pl))
-        homeplayersb = response.xpath(
-            '(//h2[contains(text(),"notes")])[1]/following-sibling::div[@class="paragraph"][1]//b')
-        for pl in homeplayersb:
-            loader.add_value('players_home', self.get_player(pl))
-        awayplayers = response.xpath(
-            '(//h2[contains(text(),"notes")])[2]/following-sibling::div[@class="paragraph"][1]//span')
-        for pl in awayplayers:
-            loader.add_value('players_away', self.get_player(pl))
-        awayplayersb = response.xpath(
-            '(//h2[contains(text(),"notes")])[2]/following-sibling::div[@class="paragraph"][1]//b')
-        for pl in awayplayersb:
-            loader.add_value('players_away', self.get_player(pl))
-        print loader.load_item()
-        yield loader.load_item()
+
+        homeplayersdiv = response.xpath(
+            '(//h2[contains(text(),"notes")])[1]/following-sibling::div[@class="paragraph"][1]//span/parent::div'
+        )
+        homeplayersnotesunf = homeplayersdiv.xpath('string()').extract_first()
+        self.logger.info('HOME %s', homeplayersnotesunf)
+        ho = self.compute_players_from_unf(homeplayersnotesunf)
+
+        awayplayersdiv = response.xpath(
+            '(//h2[contains(text(),"notes")])[2]/following-sibling::div[@class="paragraph"][1]//span/parent::div'
+        )
+        awayplayersnotesunf = awayplayersdiv.xpath('string()').extract_first()
+        self.logger.info('AWAY %s', awayplayersnotesunf)
+        aw = self.compute_players_from_unf(awayplayersnotesunf)
+
+        if 15 >= len(ho) > 7 and 15 >= len(aw) > 7:
+            for pl in ho:
+                loader.add_value('players_home', pl)
+            for pl in aw:
+                loader.add_value('players_away', pl)
+            print loader.load_item()
+            yield loader.load_item()
+        else:
+            # Sinon, autre méthode.
+            homeplayers = response.xpath(
+                '(//h2[contains(text(),"notes")])[1]/following-sibling::div[@class="paragraph"][1]//span')
+            for pl in homeplayers:
+                loader.add_value('players_home', self.get_player(pl))
+            homeplayersb = response.xpath(
+                '(//h2[contains(text(),"notes")])[1]/following-sibling::div[@class="paragraph"][1]//b')
+            for pl in homeplayersb:
+                loader.add_value('players_home', self.get_player(pl))
+            awayplayers = response.xpath(
+                '(//h2[contains(text(),"notes")])[2]/following-sibling::div[@class="paragraph"][1]//span')
+            for pl in awayplayers:
+                loader.add_value('players_away', self.get_player(pl))
+            awayplayersb = response.xpath(
+                '(//h2[contains(text(),"notes")])[2]/following-sibling::div[@class="paragraph"][1]//b')
+            for pl in awayplayersb:
+                loader.add_value('players_away', self.get_player(pl))
+            print loader.load_item()
+            yield loader.load_item()
+
+    def compute_players_from_unf(self, unfstring):
+        regex = r'^(.*)\s+(\d).*?$'
+        pllist = list()
+        for plspacenote in [p.strip().replace(u'\xa0', u' ') for p in unfstring.split('\t') if
+                            0 < len(p.strip()) <= 50]:
+            m = re.match(regex, plspacenote)
+            if m is None:
+                continue
+            name = m.group(1)
+            note = m.group(2)
+            if 'rbitre' in name or name.startswith('Note d') or len(name) > 50 or len(name) == 0:
+                continue
+            try:
+                loader = items.PlayerItemLoader()
+                loader.add_value('name', name)
+                loader.add_value('rating', int(note))
+                pllist.append(dict(loader.load_item()))
+            except ValueError:
+                continue
+            except TypeError:
+                continue
+            except AttributeError:
+                continue
+        return pllist
 
     def get_player(self, pl):
         try:
@@ -128,6 +177,8 @@ class FrancefootballSpider(CrawlSpider):
                 name = self._extract_name(pl)
             except AttributeError:
                 name = None
+            if not name:
+                name = self._extract_name(pl, 'preceding-sibling::br/following::text()')
             if not name:
                 name = self._extract_name(pl, '../strong/text()')
             if not name:
