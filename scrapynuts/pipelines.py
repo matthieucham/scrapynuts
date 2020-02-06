@@ -8,6 +8,7 @@ from oauthlib.oauth2 import BackendApplicationClient, LegacyApplicationClient
 
 from . import settings
 
+
 # -*- coding: utf-8 -*-
 
 # Define your item pipelines here
@@ -19,6 +20,8 @@ from . import settings
 class ScrapynutsFilterPipeline(object):
     def process_item(self, item, spider):
         if 'players_home' not in item or 'players_away' not in item:
+            raise DropItem('Filtered incomplete item')
+        if len(item['players_home']) < 8 and len(item['players_away']) < 8:
             raise DropItem('Filtered incomplete item')
         return item
 

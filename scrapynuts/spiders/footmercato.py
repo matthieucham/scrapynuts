@@ -3,8 +3,6 @@ import hashlib
 import re
 
 from scrapy.spiders import CrawlSpider, Rule
-from pytz import timezone
-import dateparser
 from unidecode import unidecode
 
 from .. import items

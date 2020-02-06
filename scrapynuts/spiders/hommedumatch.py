@@ -15,7 +15,9 @@ from .. import items
 class HommedumatchSpider(CrawlSpider):
     name = 'hommedumatch'
     allowed_domains = ['hommedumatch.fr']
-    start_urls = ['http://www.hommedumatch.fr/articles/france', 'http://www.hommedumatch.fr/articles/france/page/2']
+    start_urls = ['http://www.hommedumatch.fr/articles/france', 'http://www.hommedumatch.fr/articles/france/page/2',
+                  'http://www.hommedumatch.fr/articles/france/page/3',
+                  'http://www.hommedumatch.fr/articles/france/page/4']
 
     rules = (
         Rule(RestrictTextLinkExtractor(allow=('ligue\-1',), link_text_regex=u'Ligue 1.+Les notes d',
