@@ -8,7 +8,7 @@ import dateparser
 from unidecode import unidecode
 
 from .. import items
-from scrapy.linkextractors.lxmlhtml import LxmlLinkExtractor
+from scrapy.linkextractors import LinkExtractor
 
 
 class MaxifootSpider(CrawlSpider):
@@ -17,9 +17,9 @@ class MaxifootSpider(CrawlSpider):
     start_urls = ['http://www.maxifoot.fr/foot-matchs_ligue1-1.htm', 'http://www.maxifoot.fr/foot-matchs_ligue1-2.htm']
 
     rules = (
-        Rule(LxmlLinkExtractor(allow=('football/article',),
-                                       restrict_xpaths='//div[@id="main"]',
-                                       restrict_text=u'NOTES des joueurs \(', unique=True),
+        Rule(LinkExtractor(allow=('football/article',),
+                           restrict_xpaths='//div[@id="main"]',
+                           restrict_text=u'NOTES des joueurs \(', unique=True),
              callback='parse_match'),
     )
 
@@ -35,7 +35,7 @@ class MaxifootSpider(CrawlSpider):
         except ValueError:
             game_date = None
         fiche = response.xpath('//article//p[@class="fichtech"]')
-        loader.add_value('hash_url', hashlib.md5(response.url).hexdigest())
+        loader.add_value('hash_url', hashlib.md5(response.url.encode('utf-8')).hexdigest())
         loader.add_value('source', 'MAXI')
         loader.add_value('match_date', game_date)
         home = fiche.xpath('b/a[1]/text()').extract_first()

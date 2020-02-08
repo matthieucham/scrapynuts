@@ -46,7 +46,7 @@ class LfpSpider(CrawlSpider):
         stats_joueurs_resp = yield Request(stats_joueurs_url)
 
         loader = items.MatchItemLoader(response=response)
-        loader.add_value('hash_url', hashlib.md5(response.url).hexdigest())
+        loader.add_value('hash_url', hashlib.md5(response.url.encode('utf-8')).hexdigest())
         loader.add_value('source', 'LFP')
         loader.add_xpath('home_team',
                          '//div[@class="contenu_box match_stats"]/div[@class="score"]/div[@class="club_dom"]/span[contains(@class,"club")]/text()')

@@ -6,17 +6,17 @@ from scrapy.spiders import CrawlSpider, Rule
 from unidecode import unidecode
 
 from .. import items
-from scrapy.linkextractors.lxmlhtml import LxmlLinkExtractor
+from scrapy.linkextractors import LinkExtractor
 
 
 class FootmercatoSpider(CrawlSpider):
     name = 'footmercato'
     allowed_domains = ['footmercato.net']
-    start_urls = ['http://www.footmercato.net/ligue-1/',]
+    start_urls = ['http://www.footmercato.net/ligue-1/', ]
 
     rules = (
-        Rule(LxmlLinkExtractor(restrict_xpaths='//section[@class="main"]',
-                               restrict_text=u'notes du match', unique=True),
+        Rule(LinkExtractor(restrict_xpaths='//section[@class="main"]',
+                           restrict_text=u'notes du match', unique=True),
              callback='parse_match'),
     )
 
@@ -25,11 +25,12 @@ class FootmercatoSpider(CrawlSpider):
         loader = items.MatchItemLoader(response=response)
         md = response.xpath(
             '//article[@role="article"]//p[@class="article-date"]/time[@itemprop="datePublished"]/@datetime').extract_first()
-        loader.add_value('hash_url', hashlib.md5(response.url).hexdigest())
+        loader.add_value('hash_url', hashlib.md5(response.url.encode('utf-8')).hexdigest())
         loader.add_value('source', 'FMERC')
         loader.add_value('match_date', md)
 
-        crh3s = response.xpath('//article[@role="article"]//div[@itemprop="articleBody"]//h3[@class="spip" and following-sibling::p[1]/img]')
+        crh3s = response.xpath(
+            '//article[@role="article"]//div[@itemprop="articleBody"]//h3[@class="spip" and following-sibling::p[1]/img]')
         team_regex = r'(.{3,30})\s*:?$'
         hteam = None
         ateam = None

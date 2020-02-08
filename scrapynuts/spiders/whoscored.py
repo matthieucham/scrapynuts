@@ -113,7 +113,7 @@ class WhoscoredSpider(CrawlSpider):
         londontz = timezone('Europe/London')
         paristz = timezone('Europe/Paris')
         loc_dt = londontz.localize(dt)
-        loader.add_value('hash_url', hashlib.md5(response.url).hexdigest())
+        loader.add_value('hash_url', hashlib.md5(response.url.encode('utf-8')).hexdigest())
         loader.add_value('source', 'WHOSC')
         loader.add_value('match_date', loc_dt.astimezone(paristz).isoformat())
         loader.add_value('home_team', unidecode(ws_stats['home']['name']))

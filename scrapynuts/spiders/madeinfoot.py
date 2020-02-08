@@ -32,7 +32,7 @@ class MadeinfootSpider(CrawlSpider):
         dt = dateparser.parse(md)
         paristz = timezone('Europe/Paris')
         loc_dt = paristz.localize(dt)
-        loader.add_value('hash_url', hashlib.md5(response.url).hexdigest())
+        loader.add_value('hash_url', hashlib.md5(response.url.encode('utf-8')).hexdigest())
         loader.add_value('source', 'MIF')
         loader.add_value('match_date', loc_dt.isoformat())
         efttd = response.xpath(
@@ -48,7 +48,6 @@ class MadeinfootSpider(CrawlSpider):
             for plspan in response.xpath(
                     '//div[@class="footer_fiche_technique"]/table[%d]/tbody/tr/td[2]/span' % tdidx):
                 loader.add_value(ah, self.get_player(plspan))
-        print loader.load_item()
         yield loader.load_item()
 
     def get_player(self, pl):

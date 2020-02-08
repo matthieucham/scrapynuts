@@ -36,7 +36,7 @@ class Orangesports2Spider(CrawlSpider):
             game_date = None
         step_txt = response.xpath('//span[@class="day"]/text()').extract_first()
         loader.add_value('step', re.search(u'(\d+)\D+ journ', step_txt).group(1))
-        loader.add_value('hash_url', hashlib.md5(response.url).hexdigest())
+        loader.add_value('hash_url', hashlib.md5(response.url.encode('utf-8')).hexdigest())
         loader.add_value('source', 'ORS')
         loader.add_value('match_date', game_date)
         loader.add_xpath('home_team', '//div[@class="team" and @itemprop="homeTeam"]/@title')

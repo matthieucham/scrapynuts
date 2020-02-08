@@ -7,7 +7,7 @@ import unidecode
 import dateparser
 from pytz import timezone
 
-from scrapy.linkextractors.lxmlhtml import LxmlLinkExtractor
+from scrapy.linkextractors import LinkExtractor
 
 from .. import items
 
@@ -20,15 +20,15 @@ class HommedumatchSpider(CrawlSpider):
                   'http://www.hommedumatch.fr/articles/france/page/4']
 
     rules = (
-        Rule(LxmlLinkExtractor(allow=('ligue\-1',), restrict_text=u'Ligue 1.+Les notes d',
-                                       unique=True),
+        Rule(LinkExtractor(allow=('ligue\-1',), restrict_text=u'Ligue 1.+Les notes d',
+                           unique=True),
              callback='parse_match'),
     )
 
     def parse_match(self, response):
         self.logger.info('Scraping match %s', response.url)
         loader = items.MatchItemLoader(response=response)
-        loader.add_value('hash_url', hashlib.md5(response.url).hexdigest())
+        loader.add_value('hash_url', hashlib.md5(response.url.encode('utf-8')).hexdigest())
         loader.add_value('source', 'HDM')
         title = unidecode.unidecode(response.xpath('//article/header/h1/text()').extract_first())
         title_matched = re.match(

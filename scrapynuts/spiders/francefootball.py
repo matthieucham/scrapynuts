@@ -4,11 +4,8 @@ import re
 import json
 
 from scrapy.spiders import CrawlSpider, Rule
-from scrapy.http import Request, HtmlResponse
-from scrapy.linkextractors import LinkExtractor
+from scrapy.http import Request
 from scrapy.link import Link
-from pytz import timezone
-import dateparser
 from unidecode import unidecode
 from datetime import datetime
 import pytz
@@ -95,7 +92,7 @@ class FrancefootballSpider(CrawlSpider):
             '//div[contains(@class, "js-analytics-timestamp")]/@data-timestamp'
         ).extract_first()
         utc_dt = pytz.utc.localize(datetime.utcfromtimestamp(int(md)))
-        loader.add_value('hash_url', hashlib.md5(response.url).hexdigest())
+        loader.add_value('hash_url', hashlib.md5(response.url.encode('utf-8')).hexdigest())
         loader.add_value('source', 'FF')
         loader.add_value('match_date', utc_dt.isoformat())
         loader.add_xpath('home_team',
