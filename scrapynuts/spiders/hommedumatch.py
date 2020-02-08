@@ -7,7 +7,7 @@ import unidecode
 import dateparser
 from pytz import timezone
 
-from utils import RestrictTextLinkExtractor
+from scrapy.linkextractors.lxmlhtml import LxmlLinkExtractor
 
 from .. import items
 
@@ -18,7 +18,7 @@ class HommedumatchSpider(CrawlSpider):
     start_urls = ['http://www.hommedumatch.fr/articles/france', 'http://www.hommedumatch.fr/articles/france/page/2']
 
     rules = (
-        Rule(RestrictTextLinkExtractor(allow=('ligue\-1',), link_text_regex=u'Ligue 1.+Les notes d',
+        Rule(LxmlLinkExtractor(allow=('ligue\-1',), restrict_text=u'Ligue 1.+Les notes d',
                                        unique=True),
              callback='parse_match'),
     )

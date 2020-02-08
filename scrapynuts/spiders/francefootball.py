@@ -122,7 +122,6 @@ class FrancefootballSpider(CrawlSpider):
                 loader.add_value('players_home', pl)
             for pl in aw:
                 loader.add_value('players_away', pl)
-            print loader.load_item()
             yield loader.load_item()
         else:
             # Sinon, autre méthode.
@@ -142,7 +141,6 @@ class FrancefootballSpider(CrawlSpider):
                 '(//h2[contains(text(),"notes")])[2]/following-sibling::div[@class="paragraph"][1]//b')
             for pl in awayplayersb:
                 loader.add_value('players_away', self.get_player(pl))
-            print loader.load_item()
             yield loader.load_item()
 
     def compute_players_from_unf(self, unfstring):
@@ -183,7 +181,6 @@ class FrancefootballSpider(CrawlSpider):
                 name = self._extract_name(pl, '../strong/text()')
             if not name:
                 name = self._extract_name(pl, '../../text()')
-            print 'Found name %s' % name
             if 'rbitre' in name or name.startswith('Note d') or len(name) > 50 or len(name) == 0:
                 pass
             else:

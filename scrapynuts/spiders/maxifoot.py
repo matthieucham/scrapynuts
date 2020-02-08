@@ -8,7 +8,7 @@ import dateparser
 from unidecode import unidecode
 
 from .. import items
-from utils import RestrictTextLinkExtractor
+from scrapy.linkextractors.lxmlhtml import LxmlLinkExtractor
 
 
 class MaxifootSpider(CrawlSpider):
@@ -17,9 +17,9 @@ class MaxifootSpider(CrawlSpider):
     start_urls = ['http://www.maxifoot.fr/foot-matchs_ligue1-1.htm', 'http://www.maxifoot.fr/foot-matchs_ligue1-2.htm']
 
     rules = (
-        Rule(RestrictTextLinkExtractor(allow=('football/article',),
+        Rule(LxmlLinkExtractor(allow=('football/article',),
                                        restrict_xpaths='//div[@id="main"]',
-                                       link_text_regex=u'NOTES des joueurs \(', unique=True),
+                                       restrict_text=u'NOTES des joueurs \(', unique=True),
              callback='parse_match'),
     )
 

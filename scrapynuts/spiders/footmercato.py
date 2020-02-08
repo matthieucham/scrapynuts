@@ -8,17 +8,17 @@ import dateparser
 from unidecode import unidecode
 
 from .. import items
-from utils import RestrictTextLinkExtractor
+from scrapy.linkextractors.lxmlhtml import LxmlLinkExtractor
 
 
 class FootmercatoSpider(CrawlSpider):
     name = 'footmercato'
     allowed_domains = ['footmercato.net']
-    start_urls = ['http://www.footmercato.net/ligue-1/', 'http://www.maxifoot.fr/foot-matchs_ligue1-2.htm']
+    start_urls = ['http://www.footmercato.net/ligue-1/',]
 
     rules = (
-        Rule(RestrictTextLinkExtractor(restrict_xpaths='//section[@class="main"]',
-                                       link_text_regex=u'notes du match', unique=True),
+        Rule(LxmlLinkExtractor(restrict_xpaths='//section[@class="main"]',
+                               restrict_text=u'notes du match', unique=True),
              callback='parse_match'),
     )
 
@@ -64,7 +64,6 @@ class FootmercatoSpider(CrawlSpider):
             loader.add_value('players_home', {'name': n, 'rating': r})
         for n, r in aplset:
             loader.add_value('players_away', {'name': n, 'rating': r})
-        print loader.load_item()
         yield loader.load_item()
 
     def get_player(self, pl):

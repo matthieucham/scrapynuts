@@ -7,7 +7,6 @@ import unidecode
 import hashlib
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import CrawlSpider, Rule, Request
-from inline_requests import inline_requests
 
 from .. import items
 
@@ -32,7 +31,6 @@ class LfpSpider(CrawlSpider):
             req = Request('http://www.lfp.fr/ligue1/calendrier_resultat', dont_filter=True)
         return [req]
 
-    @inline_requests
     def parse_match(self, response):
         self.logger.info('Scraping match %s', response.url)
 
