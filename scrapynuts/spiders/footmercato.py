@@ -3,8 +3,6 @@ import hashlib
 import re
 
 from scrapy.spiders import CrawlSpider, Rule
-from pytz import timezone
-import dateparser
 from unidecode import unidecode
 
 from .. import items
@@ -31,15 +29,17 @@ class FootmercatoSpider(CrawlSpider):
         loader.add_value('source', 'FMERC')
         loader.add_value('match_date', md)
 
-        crh3s = response.xpath('//article[@role="article"]//div[@itemprop="articleBody"]//h3[@class="spip"]')
-        team_regex = r'(.*)\s+:$'
+        crh3s = response.xpath('//article[@role="article"]//div[@itemprop="articleBody"]//h3[@class="spip" and following-sibling::p[1]/img]')
+        team_regex = r'(.{3,30})\s*:?$'
         hteam = None
         ateam = None
         hplset = set()
         aplset = set()
         for headline in crh3s:
-            htxt = headline.xpath('text()').extract_first().replace(u'\xa0', u' ')
-            m = re.match(team_regex, htxt)
+            htxt = headline.xpath('string()').extract_first()
+            if not htxt:
+                continue
+            m = re.match(team_regex, htxt.replace(u'\xa0', u' '))
             if m:
                 if hteam is None:
                     hteam = m.group(1)
