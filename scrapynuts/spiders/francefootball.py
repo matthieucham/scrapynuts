@@ -83,7 +83,7 @@ class FrancefootballSpider(CrawlSpider):
                 seen.add(link)
                 r = Request(url=link.url if isinstance(link, Link) else link, callback=self._response_downloaded)
                 r.meta.update(rule=n, link_text=link.text if isinstance(link, Link) else link)
-                yield rule.process_request(r)
+                yield rule.process_request(r, response)
 
     def parse_match(self, response):
         self.logger.info('Scraping match %s', response.url)
@@ -103,16 +103,19 @@ class FrancefootballSpider(CrawlSpider):
         homeplayersdiv = response.xpath(
             '(//h2[contains(text(),"notes")])[1]/following-sibling::div[@class="paragraph"][1]//span/parent::div'
         )
+        ho = list()
         homeplayersnotesunf = homeplayersdiv.xpath('string()').extract_first()
-        self.logger.info('HOME %s', homeplayersnotesunf)
-        ho = self.compute_players_from_unf(homeplayersnotesunf)
-
+        if homeplayersnotesunf:
+            self.logger.info('HOME %s', homeplayersnotesunf)
+            ho = self.compute_players_from_unf(homeplayersnotesunf)
+        aw = list()
         awayplayersdiv = response.xpath(
             '(//h2[contains(text(),"notes")])[2]/following-sibling::div[@class="paragraph"][1]//span/parent::div'
         )
         awayplayersnotesunf = awayplayersdiv.xpath('string()').extract_first()
-        self.logger.info('AWAY %s', awayplayersnotesunf)
-        aw = self.compute_players_from_unf(awayplayersnotesunf)
+        if awayplayersnotesunf:
+            self.logger.info('AWAY %s', awayplayersnotesunf)
+            aw = self.compute_players_from_unf(awayplayersnotesunf)
 
         if 15 >= len(ho) > 7 and 15 >= len(aw) > 7:
             for pl in ho:
@@ -144,7 +147,7 @@ class FrancefootballSpider(CrawlSpider):
         regex = r'^(.*)\s+(\d).*?$'
         pllist = list()
         for plspacenote in [p.strip().replace(u'\xa0', u' ') for p in unfstring.split('\t') if
-                            0 < len(p.strip()) <= 50]:
+                            p is not None and 0 < len(p.strip()) <= 50]:
             m = re.match(regex, plspacenote)
             if m is None:
                 continue
