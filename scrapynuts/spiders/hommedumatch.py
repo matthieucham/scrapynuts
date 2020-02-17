@@ -32,7 +32,7 @@ class HommedumatchSpider(CrawlSpider):
         loader.add_value('source', 'HDM')
         title = unidecode.unidecode(response.xpath('//article/header/h1/text()').extract_first())
         title_matched = re.match(
-            u'Ligue 1 \W (\d+)\D+ Les notes d.\s?([\w|\-| ]+)\s*\W\s*([\w|\-| ]+) \((\d+)\s*\W\s*(\d+)\)$',
+            u'Ligue 1 \W (\d+)\D+ Les notes d.\s?([\w|\-| ]+)\s*\W\s*([\w|\-| ]+) \(\s*(\d+)\s*\W\s*(\d+)\s*\)$',
             title)
         loader.add_value('home_team', title_matched.group(2).strip())
         loader.add_value('away_team', title_matched.group(3).strip())
