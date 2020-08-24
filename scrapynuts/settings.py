@@ -10,7 +10,8 @@
 # http://scrapy.readthedocs.org/en/latest/topics/spider-middleware.html
 import os
 
-ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
+ROOT_DIR = os.path.abspath(os.path.join(
+    os.path.dirname(os.path.realpath(__file__)), os.pardir))
 
 BOT_NAME = 'scrapynuts'
 
@@ -98,7 +99,7 @@ ITEM_PIPELINES = {
 SELENIUM_CHROMEDRIVER_PATH = '%s\\resources\\chromedriver.exe' % ROOT_DIR
 SELENIUM_CHROMEADBLOCK_PATH = '%s\\resources\\extension_3_7_0_0.crx' % ROOT_DIR
 SELENIUM_GECKODRIVER_PATH = '/usr/local/bin/geckodriver'
-SELENIUM_GECKOADBLOCK_PATH = '%s/resources/adblock_plus-3.6.3-an_fx.xpi' % ROOT_DIR
+SELENIUM_GECKOADBLOCK_PATH = '%s\\resources\\adblock_plus-3.6.3-an_fx.xpi' % ROOT_DIR
 
 # TODO remove if not test
 # os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
