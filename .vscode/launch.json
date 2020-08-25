@@ -14,6 +14,72 @@
                 "whoscored"
             ],
             "console": "integratedTerminal"
+        },
+        {
+            "name": "Scrapy crawl footmercato",
+            "type": "python",
+            "request": "launch",
+            "program": "./.venv/lib/python3.8/site-packages/scrapy/cmdline.py",
+            "args": [
+                "crawl",
+                "footmercato"
+            ],
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Scrapy crawl francefootball",
+            "type": "python",
+            "request": "launch",
+            "program": "./.venv/lib/python3.8/site-packages/scrapy/cmdline.py",
+            "args": [
+                "crawl",
+                "francefootball"
+            ],
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Scrapy crawl hommedumatch",
+            "type": "python",
+            "request": "launch",
+            "program": "./.venv/lib/python3.8/site-packages/scrapy/cmdline.py",
+            "args": [
+                "crawl",
+                "hommedumatch"
+            ],
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Scrapy crawl madeinfoot",
+            "type": "python",
+            "request": "launch",
+            "program": "./.venv/lib/python3.8/site-packages/scrapy/cmdline.py",
+            "args": [
+                "crawl",
+                "madeinfoot"
+            ],
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Scrapy crawl maxifoot",
+            "type": "python",
+            "request": "launch",
+            "program": "./.venv/lib/python3.8/site-packages/scrapy/cmdline.py",
+            "args": [
+                "crawl",
+                "maxifoot"
+            ],
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Scrapy crawl orange",
+            "type": "python",
+            "request": "launch",
+            "program": "./.venv/lib/python3.8/site-packages/scrapy/cmdline.py",
+            "args": [
+                "crawl",
+                "orangesports2"
+            ],
+            "console": "integratedTerminal"
         }
     ]
 }
