@@ -15,8 +15,8 @@ from .. import items
 class Orangesports2Spider(CrawlSpider):
     name = 'orangesports2'
     allowed_domains = ['sports.orange.fr']
-    start_urls = ['https://sports.orange.fr/football/ligue-1/calendrier-resultats.html',
-                  'https://sports.orange.fr/football/ligue-1/calendrier-resultats-15eme-journee.html']
+    start_urls = [
+        'https://sports.orange.fr/football/ligue-1/calendrier-resultats.html', ]
 
     rules = (
         Rule(LinkExtractor(allow='football/ligue-1/match/[\w|-]+-apres-match-\w+\.html$', unique=True),
@@ -26,7 +26,8 @@ class Orangesports2Spider(CrawlSpider):
     def parse_match(self, response):
         self.logger.info('Scraping match %s', response.url)
         loader = items.MatchItemLoader(response=response)
-        md = response.xpath('//time[@itemprop="startDate"]/@content').extract_first()
+        md = response.xpath(
+            '//time[@itemprop="startDate"]/@content').extract_first()
         try:
             dt = dateparser.parse(md, languages=['fr'])
             paristz = timezone('Europe/Paris')
@@ -34,15 +35,22 @@ class Orangesports2Spider(CrawlSpider):
             game_date = loc_dt.isoformat()
         except ValueError:
             game_date = None
-        step_txt = response.xpath('//span[@class="day"]/text()').extract_first()
-        loader.add_value('step', re.search(u'(\d+)\D+ journ', step_txt).group(1))
-        loader.add_value('hash_url', hashlib.md5(response.url.encode('utf-8')).hexdigest())
+        step_txt = response.xpath(
+            '//span[@class="day"]/text()').extract_first()
+        loader.add_value('step', re.search(
+            u'(\d+)\D+ journ', step_txt).group(1))
+        loader.add_value('hash_url', hashlib.md5(
+            response.url.encode('utf-8')).hexdigest())
         loader.add_value('source', 'ORS')
         loader.add_value('match_date', game_date)
-        loader.add_xpath('home_team', '//div[@class="team" and @itemprop="homeTeam"]/@title')
-        loader.add_xpath('away_team', '//div[@class="team" and @itemprop="awayTeam"]/@title')
-        loader.add_xpath('home_score', '//div[@class="home-team"]//div[@class="score"]/text()')
-        loader.add_xpath('away_score', '//div[@class="guest-team"]//div[@class="score"]/text()')
+        loader.add_xpath(
+            'home_team', '//div[@class="team" and @itemprop="homeTeam"]/@title')
+        loader.add_xpath(
+            'away_team', '//div[@class="team" and @itemprop="awayTeam"]/@title')
+        loader.add_xpath(
+            'home_score', '//div[@class="home-team"]//div[@class="score"]/text()')
+        loader.add_xpath(
+            'away_score', '//div[@class="guest-team"]//div[@class="score"]/text()')
 
         debrief_par_text = \
             html.fromstring(response.text).xpath('string(//div[@itemprop="articleBody"])').split(

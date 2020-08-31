@@ -98,11 +98,19 @@ class MaxifootSpider(CrawlSpider):
         if len(ref_text) == 2:
             if titpar_ok:
                 def xpath_maker(x): return (
-                    'following-sibling::p[@class="par"]/b[parent::p/preceding-sibling::p[@class="titpar"][1]/u/text()="%s"]/text()' % x)
+                    'following-sibling::p[@class="par"]/a[@class="jou1" and parent::p/preceding-sibling::p[@class="titpar"][1]/u/text()="%s"]/text()' % x)
                 notes_home = notes_section.xpath(
                     xpath_maker(ref_text[0])).extract()
                 notes_away = notes_section.xpath(
                     xpath_maker(ref_text[1])).extract()
+                if not notes_home and not notes_away:
+                    # alternative si le style a.jou1 n'a pas été appliqué
+                    def xpath_maker(x): return (
+                        'following-sibling::p[@class="par"]/b[parent::p/preceding-sibling::p[@class="titpar"][1]/u/text()="%s"]/text()' % x)
+                    notes_home = notes_section.xpath(
+                        xpath_maker(ref_text[0])).extract()
+                    notes_away = notes_section.xpath(
+                        xpath_maker(ref_text[1])).extract()
             elif titcha_mode:
                 def xpath_maker(x): return (
                     'following-sibling::p[@class="par"]/b[parent::p/preceding-sibling::p[@class="titcha"][1]/text()="%s"]/text()' % x)
