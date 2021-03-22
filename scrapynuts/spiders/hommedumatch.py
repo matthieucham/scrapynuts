@@ -5,6 +5,7 @@ import re
 from scrapy.spiders import CrawlSpider, Rule
 import unidecode
 import dateparser
+import datetime
 from pytz import timezone
 
 from scrapy.linkextractors import LinkExtractor
@@ -44,6 +45,10 @@ class HommedumatchSpider(CrawlSpider):
         md = response.xpath(
             '/html/head/meta[@property="article:published_time"]/@content').extract_first()
         game_date = md
+        if game_date is None:
+            paristz = timezone('Europe/Paris')
+            loc_dt = paristz.localize(datetime.datetime.now())
+            game_date = loc_dt.isoformat()
         # try:
         #     dt = dateparser.parse(md, languages=['fr', 'en'])
         #     paristz = timezone('Europe/Paris')
@@ -56,12 +61,13 @@ class HommedumatchSpider(CrawlSpider):
             '//article/div[@class="entry-content entry clearfix"]//p/*[self::strong or self::b]')
         homeplayers = []
         awayplayers = []
+        allplayers = []
         pl_with_note_pattern = r'\b[\s\w\'\.\-]+\s\([\d,\.]{1,3}\)'
         next_is_home = False
         next_is_away = False
         for pn in players_nodes:
             try:
-                if pn.xpath('./text()').extract_first().startswith('Homme du match'):
+                if pn.xpath('./text()').extract_first().startswith('Homme '):
                     continue
                 if len(pn.xpath('./parent::p/@style').extract()) > 0:
                     if next_is_home:
@@ -77,14 +83,23 @@ class HommedumatchSpider(CrawlSpider):
                     elif next_is_away:
                         awayplayers.append(
                             pn.xpath('./text()').extract_first())
+                    allplayers.append(pn.xpath('./text()').extract_first())
             except AttributeError:
                 pass  # skip player_node if any parsing problem
-        for pl in homeplayers:
-            loader.add_value('players_home', self.get_player(
-                unidecode.unidecode(pl)))
-        for pl in awayplayers:
-            loader.add_value('players_away', self.get_player(
-                unidecode.unidecode(pl)))
+        if len(homeplayers) > 0 and len(awayplayers) > 0:
+            for pl in homeplayers:
+                loader.add_value('players_home', self.get_player(
+                    unidecode.unidecode(pl)))
+            for pl in awayplayers:
+                loader.add_value('players_away', self.get_player(
+                    unidecode.unidecode(pl)))
+        else:
+            # cas dégradé
+            for pl in allplayers:
+                loader.add_value('players_home', self.get_player(
+                    unidecode.unidecode(pl)))
+                loader.add_value('players_away', self.get_player(
+                    unidecode.unidecode(pl)))
 
         yield loader.load_item()
 
