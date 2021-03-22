@@ -58,7 +58,7 @@ class WhoscoredSpider(CrawlSpider):
         m = re.search(pattern, javascript_stats).group().strip()[
             len('matchCentreData ='):][:-1]
         ws_stats = json.loads(m)
-        total_time = ws_stats['maxMinute'] + 1
+        total_time = min(ws_stats['maxMinute'] + 1, 100)
         out_time = {}
         in_time = {}
         goals_time = {'home': [], 'away': []}
