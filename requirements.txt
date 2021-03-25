@@ -1,5 +1,6 @@
 attrs==19.3.0
 Automat==0.8.0
+beautifulsoup4
 certifi==2019.11.28
 cffi==1.14.0
 chardet==3.0.4
@@ -30,6 +31,9 @@ Scrapy==1.8.0
 selenium==3.141.0
 service-identity==18.1.0
 six==1.14.0
+spacy>=2.2.0,<3.0.0
+https://github.com/explosion/spacy-models/releases/download/fr_core_news_sm-2.3.0/fr_core_news_sm-2.3.0.tar.gz#egg=fr_core_news_sm
+https://github.com/explosion/spacy-models/releases/download/xx_ent_wiki_sm-2.3.0/xx_ent_wiki_sm-2.3.0.tar.gz#egg=xx_ent_wiki_sm
 Twisted==19.10.0
 tzlocal==2.0.0
 Unidecode==1.1.1
