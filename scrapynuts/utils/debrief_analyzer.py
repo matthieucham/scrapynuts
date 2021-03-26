@@ -30,7 +30,8 @@ def get_raw_content(htmlContent, contentxpath=None):
 
 
 # REGEX_TOKENS = r'(([\w\'\-\\]*[\.\s]*[\w\'\-\\]+)\s*\(?(\d{1,2}(?:[,\.]\d{1,2})?)\)?)'
-REGEX_TOKENS = r'(((?:[A-Z][a-zA-Z\'\-\\]*[\.\s]+)?[a-zA-Z]+[\'\-\\]*[a-zA-Z]+)\s*\(?(\d{1,2}(?:[,\.]\d{1,2})?)\D\)?)'
+#REGEX_TOKENS = r'(((?:[A-Z][a-zA-Z\'\-\\]*[\.\s]+)?[a-zA-Z]+[\'\-\\]*[a-zA-Z]+)\s*\(?(\d{1,2}(?:[,\.]\d{1,2})?)\D\)?)'
+REGEX_TOKENS = r'(((?:[\p{L}\'\-\\]*[\.\s]+)?[\p{L}]+[\'\-\\]*[\p{L}]+)\s*\(?(\d{1,2}(?:[,\.]\d{1,2})?)\D\)?)'
 
 def analyze(content):
     print(content)
