@@ -52,11 +52,11 @@ class WhoscoredSpider(CrawlSpider):
         """
         self.logger.info('Scraping match %s', response.url)
         javascript_stats = response.xpath(
-            '//div[@id="layout-wrapper"]/script[@type="text/javascript"]/text()').extract_first()
+            '//div[@id="layout-wrapper"]/script/text()').extract_first()
         grab_score_pattern = r"([\d]+)"
-        pattern = r"(?:matchCentreData =)(.*);"
+        pattern = r"(?:matchCentreData:)(.*)"
         m = re.search(pattern, javascript_stats).group().strip()[
-            len('matchCentreData ='):][:-1]
+            len('matchCentreData:'):][:-1]
         ws_stats = json.loads(m)
         total_time = min(ws_stats['maxMinute'] + 1, 100)
         out_time = {}
