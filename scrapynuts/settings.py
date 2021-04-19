@@ -108,3 +108,4 @@ STATNUTS_CLIENT_ID = 'F5K43vYvKUnm9OaiLhC0HGh0Sqmq0Zr42uhFX0JS'
 STATNUTS_SECRET = 'HdaNhSy3if0Qm5kkc04TfTiLjT7N97rQsjIcgn1Fx6io7Q4SboIQRctU4JU1F3prBCsJw5DS134p3nrEur9EiqCHNziM8wNqGHTArV6F1VeUju65k99JFHw7PU8SiWuT'
 # STATNUTS_URL = 'http://127.0.0.1:8000/'
 STATNUTS_URL = 'https://statnuts.django.group/'
+USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36 RuxitSynthetic/1.0 v9751182688 t38550 ath9b965f92 altpub cvcv=2"
