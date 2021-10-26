@@ -68,12 +68,12 @@ class ScrapynutsSpiderMiddleware(object):
 
 class SeleniumDownloaderMiddleware(object):
     def __init__(self):
-        chop = webdriver.ChromeOptions()
-        chop.add_extension(settings.SELENIUM_CHROMEADBLOCK_PATH)
-        self.driver = webdriver.Chrome(settings.SELENIUM_CHROMEDRIVER_PATH, chrome_options=chop)  # your chosen driver
-        # ffprofile = webdriver.FirefoxProfile()
+        # chop = webdriver.ChromeOptions()
+        # chop.add_extension(settings.SELENIUM_CHROMEADBLOCK_PATH)
+        # self.driver = webdriver.Chrome(settings.SELENIUM_CHROMEDRIVER_PATH, chrome_options=chop)  # your chosen driver
+        ffprofile = webdriver.FirefoxProfile()
         # ffprofile.add_extension(settings.SELENIUM_GECKOADBLOCK_PATH)
-        # self.driver = webdriver.Firefox(ffprofile, executable_path=settings.SELENIUM_GECKODRIVER_PATH)
+        self.driver = webdriver.Firefox(ffprofile, executable_path=settings.SELENIUM_GECKODRIVER_PATH)
 
     @classmethod
     def from_crawler(cls, crawler):

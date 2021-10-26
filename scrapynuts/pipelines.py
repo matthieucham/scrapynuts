@@ -1,4 +1,4 @@
-import urlparse
+from urllib.parse import urljoin
 
 from scrapy.exceptions import DropItem
 
@@ -53,8 +53,8 @@ class ScrapynutsPostStatnutsPipeline(object):
             self.access_token = self._get_access_token()
         item_json = self.exporter.export_item(item)
         hash_url = item_json.pop('hash_url') + '/'
-        self.oauth.post(urlparse.urljoin(self.sn_store_url, hash_url), json=item_json)
-        print 'Item stored with hash = %s' % item['hash_url']
+        self.oauth.post(urljoin(self.sn_store_url, hash_url), json=item_json)
+        print('Item stored with hash = %s' % item['hash_url'])
 
 
 class ScrapynutsPostTeamStatnutsPipeline(object):
@@ -77,5 +77,5 @@ class ScrapynutsPostTeamStatnutsPipeline(object):
             self.access_token = self._get_access_token()
         item_json = self.exporter.export_item(item)
         team_name = item_json.get('name') + '/'
-        self.oauth.post(urlparse.urljoin(self.sn_store_url, team_name), json=item_json)
-        print 'Item stored with hash = %s' % item['name']
+        self.oauth.post(urljoin(self.sn_store_url, team_name), json=item_json)
+        print('Item stored with hash = %s' % item['name'])

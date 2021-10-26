@@ -36,7 +36,7 @@ class SportsfrSpider(CrawlSpider):
         except ValueError:
             game_date = None
         loader.add_value('step', re.search(u'(\d+)\D+ journ', md).group(1))
-        loader.add_value('hash_url', hashlib.md5(response.url).hexdigest())
+        loader.add_value('hash_url', hashlib.md5(response.url.encode('utf-8')).hexdigest())
         loader.add_value('source', 'SPORT')
         loader.add_value('match_date', game_date)
         loader.add_xpath('home_team',

@@ -1,0 +1,94 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Scrapy crawl whoscored",
+            "type": "python",
+            "request": "launch",
+            "program": "./.venv/lib/python3.8/site-packages/scrapy/cmdline.py",
+            "args": [
+                "crawl",
+                "whoscored"
+            ],
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Scrapy crawl footmercato",
+            "type": "python",
+            "request": "launch",
+            "program": "./.venv/lib/python3.8/site-packages/scrapy/cmdline.py",
+            "args": [
+                "crawl",
+                "footmercato"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "Scrapy crawl francefootball",
+            "type": "python",
+            "request": "launch",
+            "program": "./.venv/lib/python3.8/site-packages/scrapy/cmdline.py",
+            "args": [
+                "crawl",
+                "francefootball"
+            ],
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Scrapy crawl hommedumatch",
+            "type": "python",
+            "request": "launch",
+            "program": "./.venv/lib/python3.8/site-packages/scrapy/cmdline.py",
+            "args": [
+                "crawl",
+                "hommedumatch"
+            ],
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Scrapy crawl madeinfoot",
+            "type": "python",
+            "request": "launch",
+            "program": "./.venv/lib/python3.8/site-packages/scrapy/cmdline.py",
+            "args": [
+                "crawl",
+                "madeinfoot"
+            ],
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Scrapy crawl maxifoot",
+            "type": "python",
+            "request": "launch",
+            "program": "./.venv/lib/python3.8/site-packages/scrapy/cmdline.py",
+            "args": [
+                "crawl",
+                "maxifoot"
+            ],
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Scrapy crawl orange",
+            "type": "python",
+            "request": "launch",
+            "program": "./.venv/lib/python3.8/site-packages/scrapy/cmdline.py",
+            "args": [
+                "crawl",
+                "orangesports2"
+            ],
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": false
+        }
+    ]
+}

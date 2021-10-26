@@ -4,11 +4,8 @@ import re
 import json
 
 from scrapy.spiders import CrawlSpider, Rule
-from scrapy.http import Request, HtmlResponse
-from scrapy.linkextractors import LinkExtractor
+from scrapy.http import Request
 from scrapy.link import Link
-from pytz import timezone
-import dateparser
 from unidecode import unidecode
 from datetime import datetime
 import pytz
@@ -86,7 +83,7 @@ class FrancefootballSpider(CrawlSpider):
                 seen.add(link)
                 r = Request(url=link.url if isinstance(link, Link) else link, callback=self._response_downloaded)
                 r.meta.update(rule=n, link_text=link.text if isinstance(link, Link) else link)
-                yield rule.process_request(r)
+                yield rule.process_request(r, response)
 
     def parse_match(self, response):
         self.logger.info('Scraping match %s', response.url)
@@ -95,7 +92,7 @@ class FrancefootballSpider(CrawlSpider):
             '//div[contains(@class, "js-analytics-timestamp")]/@data-timestamp'
         ).extract_first()
         utc_dt = pytz.utc.localize(datetime.utcfromtimestamp(int(md)))
-        loader.add_value('hash_url', hashlib.md5(response.url).hexdigest())
+        loader.add_value('hash_url', hashlib.md5(response.url.encode('utf-8')).hexdigest())
         loader.add_value('source', 'FF')
         loader.add_value('match_date', utc_dt.isoformat())
         loader.add_xpath('home_team',
@@ -106,23 +103,25 @@ class FrancefootballSpider(CrawlSpider):
         homeplayersdiv = response.xpath(
             '(//h2[contains(text(),"notes")])[1]/following-sibling::div[@class="paragraph"][1]//span/parent::div'
         )
+        ho = list()
         homeplayersnotesunf = homeplayersdiv.xpath('string()').extract_first()
-        self.logger.info('HOME %s', homeplayersnotesunf)
-        ho = self.compute_players_from_unf(homeplayersnotesunf)
-
+        if homeplayersnotesunf:
+            self.logger.info('HOME %s', homeplayersnotesunf)
+            ho = self.compute_players_from_unf(homeplayersnotesunf)
+        aw = list()
         awayplayersdiv = response.xpath(
             '(//h2[contains(text(),"notes")])[2]/following-sibling::div[@class="paragraph"][1]//span/parent::div'
         )
         awayplayersnotesunf = awayplayersdiv.xpath('string()').extract_first()
-        self.logger.info('AWAY %s', awayplayersnotesunf)
-        aw = self.compute_players_from_unf(awayplayersnotesunf)
+        if awayplayersnotesunf:
+            self.logger.info('AWAY %s', awayplayersnotesunf)
+            aw = self.compute_players_from_unf(awayplayersnotesunf)
 
         if 15 >= len(ho) > 7 and 15 >= len(aw) > 7:
             for pl in ho:
                 loader.add_value('players_home', pl)
             for pl in aw:
                 loader.add_value('players_away', pl)
-            print loader.load_item()
             yield loader.load_item()
         else:
             # Sinon, autre méthode.
@@ -142,14 +141,13 @@ class FrancefootballSpider(CrawlSpider):
                 '(//h2[contains(text(),"notes")])[2]/following-sibling::div[@class="paragraph"][1]//b')
             for pl in awayplayersb:
                 loader.add_value('players_away', self.get_player(pl))
-            print loader.load_item()
             yield loader.load_item()
 
     def compute_players_from_unf(self, unfstring):
         regex = r'^(.*)\s+(\d).*?$'
         pllist = list()
         for plspacenote in [p.strip().replace(u'\xa0', u' ') for p in unfstring.split('\t') if
-                            0 < len(p.strip()) <= 50]:
+                            p is not None and 0 < len(p.strip()) <= 50]:
             m = re.match(regex, plspacenote)
             if m is None:
                 continue
@@ -183,7 +181,6 @@ class FrancefootballSpider(CrawlSpider):
                 name = self._extract_name(pl, '../strong/text()')
             if not name:
                 name = self._extract_name(pl, '../../text()')
-            print 'Found name %s' % name
             if 'rbitre' in name or name.startswith('Note d') or len(name) > 50 or len(name) == 0:
                 pass
             else:

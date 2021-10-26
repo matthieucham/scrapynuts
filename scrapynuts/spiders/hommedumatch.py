@@ -5,9 +5,10 @@ import re
 from scrapy.spiders import CrawlSpider, Rule
 import unidecode
 import dateparser
+import datetime
 from pytz import timezone
 
-from utils import RestrictTextLinkExtractor
+from scrapy.linkextractors import LinkExtractor
 
 from .. import items
 
@@ -15,49 +16,58 @@ from .. import items
 class HommedumatchSpider(CrawlSpider):
     name = 'hommedumatch'
     allowed_domains = ['hommedumatch.fr']
-    start_urls = ['http://www.hommedumatch.fr/articles/france', 'http://www.hommedumatch.fr/articles/france/page/2',
-                  'http://www.hommedumatch.fr/articles/france/page/3',
-                  'http://www.hommedumatch.fr/articles/france/page/4']
+    start_urls = ['http://www.hommedumatch.fr/articles/france',
+                  'http://www.hommedumatch.fr/articles/france/page/2']
 
     rules = (
-        Rule(RestrictTextLinkExtractor(allow=('ligue\-1',), link_text_regex=u'Ligue 1.+Les notes d',
-                                       unique=True),
+        Rule(LinkExtractor(allow=('ligue\-1',), restrict_text=u'Ligue 1.+Les notes d',
+                           unique=True),
              callback='parse_match'),
     )
 
     def parse_match(self, response):
         self.logger.info('Scraping match %s', response.url)
         loader = items.MatchItemLoader(response=response)
-        loader.add_value('hash_url', hashlib.md5(response.url).hexdigest())
+        loader.add_value('hash_url', hashlib.md5(
+            response.url.encode('utf-8')).hexdigest())
         loader.add_value('source', 'HDM')
-        title = unidecode.unidecode(response.xpath('//article/header/h1/text()').extract_first())
+        title = unidecode.unidecode(response.xpath(
+            '//article//h1/text()').extract_first())
         title_matched = re.match(
-            u'Ligue 1 \W (\d+)\D+ Les notes d.\s?([\w|\-| ]+)\s*\W\s*([\w|\-| ]+) \((\d+)\s*\W\s*(\d+)\)$',
+            u'Ligue 1 \W (\d+)\D+ Les notes d.\s?([\w|\-| ]+)\s*\W\s*([\w|\-| ]+) \(\s*(\d+)\s*\W\s*(\d+)\s*\)$',
             title)
         loader.add_value('home_team', title_matched.group(2).strip())
         loader.add_value('away_team', title_matched.group(3).strip())
         loader.add_value('home_score', title_matched.group(4).strip())
         loader.add_value('away_score', title_matched.group(5).strip())
         loader.add_value('step', title_matched.group(1))
-        md = response.xpath('//time/text()').extract_first()
-        try:
-            dt = dateparser.parse(md, languages=['fr', 'en'])
+        # md = response.xpath('//time/text()').extract_first()
+        md = response.xpath(
+            '/html/head/meta[@property="article:published_time"]/@content').extract_first()
+        game_date = md
+        if game_date is None:
             paristz = timezone('Europe/Paris')
-            loc_dt = paristz.localize(dt)
+            loc_dt = paristz.localize(datetime.datetime.now())
             game_date = loc_dt.isoformat()
-        except ValueError:
-            game_date = None
+        # try:
+        #     dt = dateparser.parse(md, languages=['fr', 'en'])
+        #     paristz = timezone('Europe/Paris')
+        #     loc_dt = paristz.localize(dt)
+        #     game_date = loc_dt.isoformat()
+        # except ValueError:
+        #     game_date = None
         loader.add_value('match_date', game_date)
         players_nodes = response.xpath(
-            '//article/div[@class="td-post-text-content"]//p/*[self::strong or self::b]')
+            '//article/div[@class="entry-content entry clearfix"]//p/*[self::strong or self::b]')
         homeplayers = []
         awayplayers = []
+        allplayers = []
         pl_with_note_pattern = r'\b[\s\w\'\.\-]+\s\([\d,\.]{1,3}\)'
         next_is_home = False
         next_is_away = False
         for pn in players_nodes:
             try:
-                if pn.xpath('./text()').extract_first().startswith('Homme du match'):
+                if pn.xpath('./text()').extract_first().startswith('Homme '):
                     continue
                 if len(pn.xpath('./parent::p/@style').extract()) > 0:
                     if next_is_home:
@@ -68,15 +78,28 @@ class HommedumatchSpider(CrawlSpider):
                         next_is_away = False
                 else:
                     if next_is_home:
-                        homeplayers.append(pn.xpath('./text()').extract_first())
+                        homeplayers.append(
+                            pn.xpath('./text()').extract_first())
                     elif next_is_away:
-                        awayplayers.append(pn.xpath('./text()').extract_first())
+                        awayplayers.append(
+                            pn.xpath('./text()').extract_first())
+                    allplayers.append(pn.xpath('./text()').extract_first())
             except AttributeError:
                 pass  # skip player_node if any parsing problem
-        for pl in homeplayers:
-            loader.add_value('players_home', self.get_player(unidecode.unidecode(pl)))
-        for pl in awayplayers:
-            loader.add_value('players_away', self.get_player(unidecode.unidecode(pl)))
+        if len(homeplayers) > 0 and len(awayplayers) > 0:
+            for pl in homeplayers:
+                loader.add_value('players_home', self.get_player(
+                    unidecode.unidecode(pl)))
+            for pl in awayplayers:
+                loader.add_value('players_away', self.get_player(
+                    unidecode.unidecode(pl)))
+        else:
+            # cas dégradé
+            for pl in allplayers:
+                loader.add_value('players_home', self.get_player(
+                    unidecode.unidecode(pl)))
+                loader.add_value('players_away', self.get_player(
+                    unidecode.unidecode(pl)))
 
         yield loader.load_item()
 

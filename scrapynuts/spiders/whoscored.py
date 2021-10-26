@@ -22,16 +22,17 @@ class WhoscoredSpider(CrawlSpider):
                            restrict_xpaths='//div[@id="sub-navigation"]'),
              process_request='add_meta_selenium', follow=True),
         Rule(
-            LinkExtractor(allow=('Matches/\w{6,}/Live',), restrict_xpaths='//div[@id="tournament-fixture-wrapper"]'),
+            LinkExtractor(allow=(
+                'Matches/\w{6,}/Live',), restrict_xpaths='//div[@id="tournament-fixture-wrapper"]'),
             callback='parse_match',
             process_request='add_meta_selenium'),)
 
     def start_requests(self):
         req = Request('https://www.whoscored.com/Regions/74/Tournaments/22/France-Ligue-1',
                       dont_filter=True)
-        req.meta.update(selenium=True, wait_for_xpath='//table[@id="tournament-fixture"]',
+        req.meta.update(selenium=True, wait_for_xpath='//div[@id="tournament-fixture"]',
                         click_on_xpath='//div[@id="date-controller"]/a[contains(@class,"previous")]',
-                        wait_after_click='//table[@id="tournament-fixture"]//td/a[contains(@class,"result-1 rc")]'
+                        wait_after_click='//div[@id="tournament-fixture"]//div/a[contains(@class,"result-1 rc")]'
                         )
         return [req]
 
@@ -51,12 +52,13 @@ class WhoscoredSpider(CrawlSpider):
         """
         self.logger.info('Scraping match %s', response.url)
         javascript_stats = response.xpath(
-            '//div[@id="layout-content-wrapper"]/script[@type="text/javascript"]/text()').extract_first()
+            '//div[@id="layout-wrapper"]/script/text()').extract_first()
         grab_score_pattern = r"([\d]+)"
-        pattern = r"(?:matchCentreData =)(.*);"
-        m = re.search(pattern, javascript_stats).group().strip()[len('matchCentreData ='):][:-1]
+        pattern = r"(?:matchCentreData:)(.*)"
+        m = re.search(pattern, javascript_stats).group().strip()[
+            len('matchCentreData:'):][:-1]
         ws_stats = json.loads(m)
-        total_time = ws_stats['maxMinute'] + 1
+        total_time = min(ws_stats['maxMinute'] + 1, 100)
         out_time = {}
         in_time = {}
         goals_time = {'home': [], 'away': []}
@@ -79,8 +81,10 @@ class WhoscoredSpider(CrawlSpider):
                         in_time[ev['playerId']] = ev['minute']
                     elif 'Goal' == ev['type']['displayName']:
                         if 'isOwnGoal' in ev:
-                            goals_time['away' if field == 'home' else 'home'].append(ev['minute'])
-                            self.increment_or_set_key(event_stats[ev['playerId']], 'own_goals')
+                            goals_time['away' if field ==
+                                       'home' else 'home'].append(ev['minute'])
+                            self.increment_or_set_key(
+                                event_stats[ev['playerId']], 'own_goals')
                         else:
                             goals_time[field].append(ev['minute'])
                             is_penalty = False
@@ -89,23 +93,27 @@ class WhoscoredSpider(CrawlSpider):
                                     is_penalty = True
                                     break
                             if is_penalty:
-                                self.increment_or_set_key(event_stats[ev['playerId']], 'penalties_scored')
+                                self.increment_or_set_key(
+                                    event_stats[ev['playerId']], 'penalties_scored')
                             else:
                                 for q in ev['qualifiers']:
                                     if 'RelatedEventId' == q['type']['displayName']:
                                         goal_related_events.append(q['value'])
                                         break
-                                self.increment_or_set_key(event_stats[ev['playerId']], 'goals_scored')
+                                self.increment_or_set_key(
+                                    event_stats[ev['playerId']], 'goals_scored')
                 except KeyError:
                     pass
             # Loop again to find passes
             for ev in ws_stats[field]['incidentEvents']:
                 if 'Pass' == ev['type']['displayName']:
-                    self.increment_or_set_key(event_stats[ev['playerId']], 'goals_assists')
+                    self.increment_or_set_key(
+                        event_stats[ev['playerId']], 'goals_assists')
                 elif str(ev['eventId']) in goal_related_events:
                     for q in ev['qualifiers']:
                         if q['type']['displayName'] in ('IntentionalGoalAssist', 'IntentionalAssist', 'KeyPass',):
-                            self.increment_or_set_key(event_stats[ev['playerId']], 'goals_assists')
+                            self.increment_or_set_key(
+                                event_stats[ev['playerId']], 'goals_assists')
                             break
 
         loader = items.MatchItemLoader(items.MatchItem(), response=response)
@@ -113,13 +121,16 @@ class WhoscoredSpider(CrawlSpider):
         londontz = timezone('Europe/London')
         paristz = timezone('Europe/Paris')
         loc_dt = londontz.localize(dt)
-        loader.add_value('hash_url', hashlib.md5(response.url).hexdigest())
+        loader.add_value('hash_url', hashlib.md5(
+            response.url.encode('utf-8')).hexdigest())
         loader.add_value('source', 'WHOSC')
         loader.add_value('match_date', loc_dt.astimezone(paristz).isoformat())
         loader.add_value('home_team', unidecode(ws_stats['home']['name']))
         loader.add_value('away_team', unidecode(ws_stats['away']['name']))
-        loader.add_value('home_score', re.search(grab_score_pattern, ws_stats['score'].split(' : ')[0]).group(1))
-        loader.add_value('away_score', re.search(grab_score_pattern, ws_stats['score'].split(' : ')[1]).group(1))
+        loader.add_value('home_score', re.search(
+            grab_score_pattern, ws_stats['score'].split(' : ')[0]).group(1))
+        loader.add_value('away_score', re.search(
+            grab_score_pattern, ws_stats['score'].split(' : ')[1]).group(1))
 
         for field in ['home', 'away']:
             conceded_goals = goals_time['away' if field == 'home' else 'home']
@@ -138,14 +149,16 @@ class WhoscoredSpider(CrawlSpider):
         loader = items.PlayerItemLoader()
         loader.add_value('name', unidecode(pl['name']))
         loader.add_value('rating', mark)
-        loader.add_value('stats', self.get_stats(pl, conceded_goals, total_time, out_time, in_time, event_stats))
+        loader.add_value('stats', self.get_stats(
+            pl, conceded_goals, total_time, out_time, in_time, event_stats))
         return dict(loader.load_item())
 
     def get_stats(self, pl, conceded_goals, total_time, out_time, in_time, event_stats):
         read_stats = {}
         if pl['playerId'] in event_stats:
             read_stats = event_stats[pl['playerId']]
-        read_stats['goals_saved'] = len(pl['stats']['totalSaves']) if 'totalSaves' in pl['stats'] else 0
+        read_stats['goals_saved'] = len(
+            pl['stats']['totalSaves']) if 'totalSaves' in pl['stats'] else 0
         if 'isFirstEleven' in pl:
             if pl['playerId'] in out_time:
                 read_stats['playtime'] = out_time[pl['playerId']]
@@ -156,7 +169,8 @@ class WhoscoredSpider(CrawlSpider):
                 read_stats['goals_conceded'] = len(conceded_goals)
         elif pl['position'] == 'Sub' and 'subbedInExpandedMinute' in pl:
             if pl['playerId'] in out_time:
-                read_stats['playtime'] = out_time[pl['playerId']] - in_time[pl['playerId']]
+                read_stats['playtime'] = out_time[pl['playerId']] - \
+                    in_time[pl['playerId']]
                 read_stats['goals_conceded'] = len(list(
                     filter((lambda x: x <= out_time[pl['playerId']] and x >= in_time[pl['playerId']]),
                            conceded_goals)))

@@ -6,17 +6,17 @@ from scrapy.spiders import CrawlSpider, Rule
 from unidecode import unidecode
 
 from .. import items
-from utils import RestrictTextLinkExtractor
+from scrapy.linkextractors import LinkExtractor
 
 
 class FootmercatoSpider(CrawlSpider):
     name = 'footmercato'
     allowed_domains = ['footmercato.net']
-    start_urls = ['http://www.footmercato.net/ligue-1/', 'http://www.maxifoot.fr/foot-matchs_ligue1-2.htm']
+    start_urls = ['http://www.footmercato.net/ligue-1/', ]
 
     rules = (
-        Rule(RestrictTextLinkExtractor(restrict_xpaths='//section[@class="main"]',
-                                       link_text_regex=u'notes du match', unique=True),
+        Rule(LinkExtractor(restrict_xpaths='//section[@class="main"]',
+                           restrict_text=u'notes du match', unique=True),
              callback='parse_match'),
     )
 
@@ -25,11 +25,12 @@ class FootmercatoSpider(CrawlSpider):
         loader = items.MatchItemLoader(response=response)
         md = response.xpath(
             '//article[@role="article"]//p[@class="article-date"]/time[@itemprop="datePublished"]/@datetime').extract_first()
-        loader.add_value('hash_url', hashlib.md5(response.url).hexdigest())
+        loader.add_value('hash_url', hashlib.md5(response.url.encode('utf-8')).hexdigest())
         loader.add_value('source', 'FMERC')
         loader.add_value('match_date', md)
 
-        crh3s = response.xpath('//article[@role="article"]//div[@itemprop="articleBody"]//h3[@class="spip" and following-sibling::p[1]/img]')
+        crh3s = response.xpath(
+            '//article[@role="article"]//div[@itemprop="articleBody"]//h3[@class="spip" and following-sibling::p[1]/img]')
         team_regex = r'(.{3,30})\s*:?$'
         hteam = None
         ateam = None
@@ -64,7 +65,6 @@ class FootmercatoSpider(CrawlSpider):
             loader.add_value('players_home', {'name': n, 'rating': r})
         for n, r in aplset:
             loader.add_value('players_away', {'name': n, 'rating': r})
-        print loader.load_item()
         yield loader.load_item()
 
     def get_player(self, pl):

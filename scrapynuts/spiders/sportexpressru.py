@@ -51,7 +51,7 @@ class SportexpressruSpider(CrawlSpider):
             game_date = loc_dt.isoformat()
         except ValueError:
             game_date = None
-        loader.add_value('hash_url', hashlib.md5(response.url).hexdigest())
+        loader.add_value('hash_url', hashlib.md5(response.url.encode('utf-8')).hexdigest())
         loader.add_value('source', 'SPEX')
         loader.add_value('match_date', game_date)
         loader.add_value('home_team',
