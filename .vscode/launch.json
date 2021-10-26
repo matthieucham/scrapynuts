@@ -24,7 +24,8 @@
                 "crawl",
                 "footmercato"
             ],
-            "console": "integratedTerminal"
+            "console": "integratedTerminal",
+            "justMyCode": false
         },
         {
             "name": "Scrapy crawl francefootball",
@@ -80,6 +81,14 @@
                 "orangesports2"
             ],
             "console": "integratedTerminal"
+        },
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": false
         }
     ]
 }
