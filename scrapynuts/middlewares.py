@@ -14,6 +14,8 @@ from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+import undetected_chromedriver.v2 as uc
+
 
 from . import settings
 
@@ -68,55 +70,63 @@ class ScrapynutsSpiderMiddleware(object):
 
 class SeleniumDownloaderMiddleware(object):
     def __init__(self):
-        # chop = webdriver.ChromeOptions()
-        # chop.add_extension(settings.SELENIUM_CHROMEADBLOCK_PATH)
-        # self.driver = webdriver.Chrome(settings.SELENIUM_CHROMEDRIVER_PATH, chrome_options=chop)  # your chosen driver
-        ffprofile = webdriver.FirefoxProfile()
-        # ffprofile.add_extension(settings.SELENIUM_GECKOADBLOCK_PATH)
-        self.driver = webdriver.Firefox(ffprofile, executable_path=settings.SELENIUM_GECKODRIVER_PATH)
+        # # chop = webdriver.ChromeOptions()
+        # # chop.add_extension(settings.SELENIUM_CHROMEADBLOCK_PATH)
+        # # self.driver = webdriver.Chrome(settings.SELENIUM_CHROMEDRIVER_PATH, chrome_options=chop)  # your chosen driver
+        # ffprofile = webdriver.FirefoxProfile()
+        # # ffprofile.add_extension(settings.SELENIUM_GECKOADBLOCK_PATH)
+        # self.driver = webdriver.Firefox(ffprofile, executable_path=settings.SELENIUM_GECKODRIVER_PATH)
+        uc.TARGET_VERSION=95
+        options = uc.ChromeOptions()
+        options.add_argument('--no-first-run --no-service-autorun --password-store=basic')
+        self.driver = uc.Chrome(options=options)
+
+
+
 
     @classmethod
     def from_crawler(cls, crawler):
         s = cls()
-        crawler.signals.connect(s.engine_stopped, signal=signals.engine_stopped)
+        # crawler.signals.connect(s.engine_stopped, signal=signals.engine_stopped)
         return s
 
-    def engine_stopped(self):
-        self.driver.quit()
+    # def engine_stopped(self):
+    #     self.driver.quit()
 
     def process_request(self, request, spider):
         # only process tagged request or delete this if you want all
         if not request.meta.get('selenium'):
             return
-        time.sleep(random.random()*5)  # randomize behavior to pass incap.
-        self.driver.get(request.url)
-        if request.meta.get('wait_for_xpath') is not None:
-            try:
-                WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.XPATH,
-                                                                                     request.meta.get(
-                                                                                         'wait_for_xpath'))))
-            finally:
-                pass
-        if request.meta.get('click_on_xpath') is not None:
-            target = self.driver.find_element_by_xpath(request.meta.get('click_on_xpath'))
-            time.sleep(random.random()*5)
-            try:
-                target.click()
-            except WebDriverException as e:
-                # target is not clickable probably because of a modal in front : quantcast
-                try:
-                    self.driver.find_element_by_css_selector('button[class="qc-cmp-button"]').click()
-                    WebDriverWait(self.driver, 10).until(
-                        EC.invisibility_of_element_located((By.CLASS_NAME, 'qc-cmp-ui-container')))
-                finally:
-                    pass
-            if request.meta.get('wait_after_click') is not None:
+        with self.driver:
+            # time.sleep(random.random()*5)  # randomize behavior to pass incap.
+            self.driver.get(request.url)
+            if request.meta.get('wait_for_xpath') is not None:
                 try:
                     WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.XPATH,
-                                                                                         request.meta.get(
-                                                                                             'wait_after_click'))))
+                                                                                        request.meta.get(
+                                                                                            'wait_for_xpath'))))
                 finally:
                     pass
-        body = self.driver.page_source
-        response = HtmlResponse(url=self.driver.current_url, body=body, encoding='utf-8')
-        return response
+            if request.meta.get('click_on_xpath') is not None:
+                target = self.driver.find_element_by_xpath(request.meta.get('click_on_xpath'))
+                # time.sleep(random.random()*5)
+                try:
+                    target.click()
+                except WebDriverException as e:
+                    # target is not clickable probably because of a modal in front : quantcast
+                    try:
+                        self.driver.find_element_by_css_selector('button[class="qc-cmp-button"]').click()
+                        WebDriverWait(self.driver, 10).until(
+                            EC.invisibility_of_element_located((By.CLASS_NAME, 'qc-cmp-ui-container')))
+                    finally:
+                        pass
+                if request.meta.get('wait_after_click') is not None:
+                    try:
+                        WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.XPATH,
+                                                                                            request.meta.get(
+                                                                                                'wait_after_click'))))
+                    finally:
+                        pass
+            body = self.driver.page_source
+            response = HtmlResponse(url=self.driver.current_url, body=body, encoding='utf-8')
+            return response

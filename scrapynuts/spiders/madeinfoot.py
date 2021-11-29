@@ -14,18 +14,12 @@ import hashlib
 class MadeinfootSpider(CrawlSpider):
     name = "madeinfoot"
     allowed_domains = ["ouest-france.fr"]
-    start_urls = ["https://madeinfoot.ouest-france.fr/ligue-1/calendrier-resultats.php"]
+    start_urls = [f"https://madeinfoot.ouest-france.fr/ligue-1/index.php?p={i+1}&ligue_num=16" for i in range(50)]
 
     rules = (
         Rule(
             LinkExtractor(
-                allow="/live/apres-match-ligue-1",
-                restrict_xpaths='//section[@id="une"]',
-            )
-        ),
-        Rule(
-            LinkExtractor(
-                allow="infos/article-ligue-1", restrict_xpaths='//section[@id="live"]', restrict_text=u'note', unique=True,
+                allow="infos/article-", restrict_xpaths='//div[@id="infoposts"]', restrict_text=u'note', unique=True,
             ),
             callback="parse_match",
         ),
