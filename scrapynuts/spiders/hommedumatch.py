@@ -16,11 +16,11 @@ from .. import items
 class HommedumatchSpider(CrawlSpider):
     name = 'hommedumatch'
     allowed_domains = ['hommedumatch.fr']
-    start_urls = ['http://www.hommedumatch.fr/articles/france',
-                  'http://www.hommedumatch.fr/articles/france/page/2']
+    start_urls = ['http://www.hommedumatch.fr/articles/category/france',
+                  'http://www.hommedumatch.fr/articles/category/france/page/2']
 
     rules = (
-        Rule(LinkExtractor(allow=('ligue\-1',), restrict_text=u'Ligue 1.+Les notes d',
+        Rule(LinkExtractor(allow=('france',), restrict_text=u'Les notes',
                            unique=True),
              callback='parse_match'),
     )
@@ -33,14 +33,18 @@ class HommedumatchSpider(CrawlSpider):
         loader.add_value('source', 'HDM')
         title = unidecode.unidecode(response.xpath(
             '//article//h1/text()').extract_first())
+        # title_matched = re.match(
+        #     u'Ligue 1 \W (\d+)\D+ Les notes d.\s?([\w|\-| ]+)\s*\W\s*([\w|\-| ]+) \(\s*(\d+)\s*\W\s*(\d+)\s*\)$',
+        #     title)
         title_matched = re.match(
-            u'Ligue 1 \W (\d+)\D+ Les notes d.\s?([\w|\-| ]+)\s*\W\s*([\w|\-| ]+) \(\s*(\d+)\s*\W\s*(\d+)\s*\)$',
-            title)
-        loader.add_value('home_team', title_matched.group(2).strip())
-        loader.add_value('away_team', title_matched.group(3).strip())
-        loader.add_value('home_score', title_matched.group(4).strip())
-        loader.add_value('away_score', title_matched.group(5).strip())
-        loader.add_value('step', title_matched.group(1))
+            u'^([\w|\-| ]+)s*\-\s*([\w|\-| ]+)\(\s*(\d+)\s*\W\s*(\d+)\s*\).*\[Ligue 1\s*\W\s*(\d+).*j.*\]$',
+            title
+        )
+        loader.add_value('home_team', title_matched.group(1).strip())
+        loader.add_value('away_team', title_matched.group(2).strip())
+        loader.add_value('home_score', title_matched.group(3).strip())
+        loader.add_value('away_score', title_matched.group(4).strip())
+        loader.add_value('step', title_matched.group(5))
         # md = response.xpath('//time/text()').extract_first()
         md = response.xpath(
             '/html/head/meta[@property="article:published_time"]/@content').extract_first()
