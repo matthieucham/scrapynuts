@@ -20,7 +20,7 @@ class HommedumatchSpider(CrawlSpider):
                   'http://www.hommedumatch.fr/articles/category/france/page/2']
 
     rules = (
-        Rule(LinkExtractor(allow=('france',), restrict_text=u'Les notes',
+        Rule(LinkExtractor(allow=('france.*les\-notes\-completes\-ligue\-1',),
                            unique=True),
              callback='parse_match'),
     )
