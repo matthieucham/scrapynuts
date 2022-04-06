@@ -30,7 +30,7 @@ Scrapy==1.8.0
 selenium==3.141.0
 service-identity==18.1.0
 six==1.14.0
-Twisted==19.10.0
+Twisted==22.2.0
 tzlocal==2.0.0
 undetected-chromedriver
 Unidecode==1.1.1
