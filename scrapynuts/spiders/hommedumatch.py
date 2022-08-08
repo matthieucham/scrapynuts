@@ -33,9 +33,6 @@ class HommedumatchSpider(CrawlSpider):
         loader.add_value('source', 'HDM')
         title = unidecode.unidecode(response.xpath(
             '//article//h1/text()').extract_first())
-        # title_matched = re.match(
-        #     u'Ligue 1 \W (\d+)\D+ Les notes d.\s?([\w|\-| ]+)\s*\W\s*([\w|\-| ]+) \(\s*(\d+)\s*\W\s*(\d+)\s*\)$',
-        #     title)
         title_matched = re.match(
             u'^([\w|\-| ]+)s*\-\s*([\w|\-| ]+)\(\s*(\d+)\s*\W\s*(\d+)\s*\).*\[Ligue 1\s*\W\s*(\d+).*j.*\]$',
             title
@@ -45,21 +42,15 @@ class HommedumatchSpider(CrawlSpider):
         loader.add_value('home_score', title_matched.group(3).strip())
         loader.add_value('away_score', title_matched.group(4).strip())
         loader.add_value('step', title_matched.group(5))
-        # md = response.xpath('//time/text()').extract_first()
         md = response.xpath(
-            '/html/head/meta[@property="article:published_time"]/@content').extract_first()
-        game_date = md
-        if game_date is None:
+            '//div[@id="single-post-meta"]/span[@class="date meta-item tie-icon"]/text()').extract_first()
+        try:
+            dt = dateparser.parse(md, languages=['fr', 'en'])
             paristz = timezone('Europe/Paris')
-            loc_dt = paristz.localize(datetime.datetime.now())
+            loc_dt = paristz.localize(dt)
             game_date = loc_dt.isoformat()
-        # try:
-        #     dt = dateparser.parse(md, languages=['fr', 'en'])
-        #     paristz = timezone('Europe/Paris')
-        #     loc_dt = paristz.localize(dt)
-        #     game_date = loc_dt.isoformat()
-        # except ValueError:
-        #     game_date = None
+        except ValueError:
+            game_date = None
         loader.add_value('match_date', game_date)
         players_nodes = response.xpath(
             '//article/div[@class="entry-content entry clearfix"]//p/*[self::strong or self::b]')

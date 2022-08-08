@@ -14,7 +14,7 @@ import hashlib
 class MadeinfootSpider(CrawlSpider):
     name = "madeinfoot"
     allowed_domains = ["ouest-france.fr"]
-    start_urls = [f"https://madeinfoot.ouest-france.fr/ligue-1/index.php?p={i+1}&ligue_num=16" for i in range(50)]
+    start_urls = [f"https://madeinfoot.ouest-france.fr/ligue-1/index.php?p={i+1}&ligue_num=16" for i in range(10)]
 
     rules = (
         Rule(
