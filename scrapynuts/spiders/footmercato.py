@@ -12,11 +12,11 @@ from scrapy.linkextractors import LinkExtractor
 class FootmercatoSpider(CrawlSpider):
     name = 'footmercato'
     allowed_domains = ['footmercato.net']
-    start_urls = ['http://www.footmercato.net/ligue-1/', ]
+    start_urls = ['https://www.footmercato.net/france/ligue-1/club', ]
 
     rules = (
-        Rule(LinkExtractor(restrict_xpaths='//div',
-                           restrict_text=u'notes du match', unique=True),
+        Rule(LinkExtractor(allow=[r'actualite$']), follow=True),
+        Rule(LinkExtractor(allow=[r'les\-notes\-du\-match'], unique=True),
              callback='parse_match'),
     )
 
