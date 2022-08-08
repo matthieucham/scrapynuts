@@ -15,7 +15,7 @@ class FootmercatoSpider(CrawlSpider):
     start_urls = ['http://www.footmercato.net/ligue-1/', ]
 
     rules = (
-        Rule(LinkExtractor(restrict_xpaths='//section[@class="main"]',
+        Rule(LinkExtractor(restrict_xpaths='//div',
                            restrict_text=u'notes du match', unique=True),
              callback='parse_match'),
     )
@@ -23,44 +23,42 @@ class FootmercatoSpider(CrawlSpider):
     def parse_match(self, response):
         self.logger.info('Scraping match %s', response.url)
         loader = items.MatchItemLoader(response=response)
-        md = response.xpath(
-            '//article[@role="article"]//p[@class="article-date"]/time[@itemprop="datePublished"]/@datetime').extract_first()
+        md = response.xpath('//li[@class="article__date"]//time/@datetime').extract_first()
         loader.add_value('hash_url', hashlib.md5(response.url.encode('utf-8')).hexdigest())
         loader.add_value('source', 'FMERC')
         loader.add_value('match_date', md)
-
-        crh3s = response.xpath(
-            '//article[@role="article"]//div[@itemprop="articleBody"]//h3[@class="spip" and following-sibling::p[1]/img]')
-        team_regex = r'(.{3,30})\s*:?$'
-        hteam = None
-        ateam = None
+        
+        summary = response.xpath('//ul[@class="article__matches"]')
+        hteam = summary.xpath('li/a/span[@class="matchItem__team matchItem__team--home"]/span[@class="matchItem__team__name"]/text()').extract_first().strip()
+        hscore = summary.xpath('li/a//span[@class="matchItem__score__value matchItem__score__value--home"]/text()').extract_first().strip()
+        ateam = summary.xpath('li/a//span[@class="matchItem__team matchItem__team--away"]/span[@class="matchItem__team__name"]/text()').extract_first().strip()
+        ascore = summary.xpath('li/a//span[@class="matchItem__score__value matchItem__score__value--away"]/text()').extract_first().strip()
+        
+        teamplayers_uls = response.xpath('//div[@class="article__content"]//ul')
+        
+        hpltext = teamplayers_uls[0].xpath('li/p/strong/text()').extract()
+        apltext = teamplayers_uls[1].xpath('li/p/strong/text()').extract()
+        
         hplset = set()
-        aplset = set()
-        for headline in crh3s:
-            htxt = headline.xpath('string()').extract_first()
-            if not htxt:
+        for player in hpltext:
+            if player.startswith("Remplac"):
                 continue
-            m = re.match(team_regex, htxt.replace(u'\xa0', u' '))
-            if m:
-                if hteam is None:
-                    hteam = m.group(1)
-                    hps = headline.xpath('following-sibling::p/strong/text()').extract()
-                    for hp in hps:
-                        pl = self.get_player(hp)
-                        if pl:
-                            hplset.add(pl)
-                else:
-                    ateam = m.group(1)
-                    aps = headline.xpath('following-sibling::p/strong/text()').extract()
-                    for ap in aps:
-                        pl = self.get_player(ap)
-                        if pl:
-                            aplset.add(pl)
+            pl = self.get_player(player)
+            if pl:
+                hplset.add(pl)
+            
+        aplset = set()
+        for player in apltext:
+            if player.startswith("Remplac"):
+                continue
+            pl = self.get_player(player)
+            if pl:
+                aplset.add(pl)
 
-        # hplset contient les joueurs des deux équipes: retirer aplset permet de ne conserver que les joueurs  h:
-        hplset = hplset - aplset
         loader.add_value('home_team', hteam)
+        loader.add_value('home_score', hscore)
         loader.add_value('away_team', ateam)
+        loader.add_value('away_score', ascore)
         for n, r in hplset:
             loader.add_value('players_home', {'name': n, 'rating': r})
         for n, r in aplset:
@@ -68,6 +66,7 @@ class FootmercatoSpider(CrawlSpider):
         yield loader.load_item()
 
     def get_player(self, pl):
-        matched = re.match(r'(.+)\s\(([\d,]+)\)\s*:?\s*$', pl.replace(u'\xa0', u' '))
+        player_regex = r'([^\s^\(]+)\s*\(([0-9,\.]{1,3})\)\s:'
+        matched = re.match(player_regex, pl.replace(u'\xa0', u' '))
         if matched:
             return unidecode(matched.group(1).strip()), matched.group(2).replace(',', '.')
