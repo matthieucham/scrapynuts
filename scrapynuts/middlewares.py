@@ -108,14 +108,14 @@ class SeleniumDownloaderMiddleware(object):
                 finally:
                     pass
             if request.meta.get('click_on_xpath') is not None:
-                target = self.driver.find_element_by_xpath(request.meta.get('click_on_xpath'))
+                target = self.driver.find_element(by=By.XPATH, value=request.meta.get('click_on_xpath'))
                 # time.sleep(random.random()*5)
                 try:
                     target.click()
                 except WebDriverException as e:
                     # target is not clickable probably because of a modal in front : quantcast
                     try:
-                        self.driver.find_element_by_css_selector('button[class="qc-cmp-button"]').click()
+                        self.driver.find_element(by=By.CSS_SELECTOR, value='button[class="qc-cmp-button"]').click()
                         WebDriverWait(self.driver, 10).until(
                             EC.invisibility_of_element_located((By.CLASS_NAME, 'qc-cmp-ui-container')))
                     finally:
